@@ -1,0 +1,76 @@
+// frontend/src/i18n.js
+// Feature 5: Multi-language support
+// Static UI strings only. Dynamic content (drift analysis) comes pre-translated from the backend.
+
+export const LANGUAGES = {
+  en: 'English',
+  pt: 'Português',
+};
+
+export const STRINGS = {
+  en: {
+    appTitle:       'ORIGINALITY RADAR',
+    appSubtitle:    'VOYAGE AI EMBEDDINGS · COSINE DISTANCE · GLOBAL VECTOR MAP',
+    ideasInMap:     (n) => `${n.toLocaleString()} idea${n !== 1 ? 's' : ''} in the global map`,
+    inputPlaceholder: 'Describe your idea — how far from the known map?',
+    charCount:      (n) => `${n} / 400`,
+    scanBtn:        'SCAN',
+    scanningBtn:    'SCANNING…',
+    statusEmbedding: 'Generating real embedding via Voyage AI…',
+    statusMap:      'Fetching updated global map…',
+    statusDone:     (n) => `✓ Scored against ${n.toLocaleString()} idea${n !== 1 ? 's' : ''} in global map`,
+    nearLabel:      'Near',
+    commonLabel:    'COMMON',
+    novelLabel:     'NOVEL',
+    nearestDb:      'NEAREST IN DATABASE',
+    simLabel:       '% sim',
+    driftRefine:    'Iterate →',
+    sessionLog:     (n) => `SESSION LOG — ${n} IDEA${n !== 1 ? 'S' : ''} SCANNED`,
+    globalMap:      (n) => `GLOBAL IDEA MAP — ${n} IDEAS`,
+    densityLabels: {
+      SATURATED: 'SATURATED',
+      DENSE:     'DENSE',
+      POPULATED: 'POPULATED',
+      SPARSE:    'SPARSE',
+      FRONTIER:  'FRONTIER',
+      VOID:      'VOID',
+    },
+    emptyBody: 'Your idea is converted to a real 1024-dimensional semantic vector via Voyage AI. Cosine distance to every stored idea gives an objective originality score. No hallucination — pure math.',
+    allDomains: 'All',
+    filterLabel: 'FILTER BY DOMAIN',
+    liveLabel: 'LIVE',
+  },
+
+  pt: {
+    appTitle:       'RADAR DE ORIGINALIDADE',
+    appSubtitle:    'VETORES VOYAGE AI · DISTÂNCIA COSSENO · MAPA GLOBAL',
+    ideasInMap:     (n) => `${n.toLocaleString()} ideia${n !== 1 ? 's' : ''} no mapa global`,
+    inputPlaceholder: 'Descreva sua ideia — quão longe do mapa conhecido?',
+    charCount:      (n) => `${n} / 400`,
+    scanBtn:        'ESCANEAR',
+    scanningBtn:    'ESCANEANDO…',
+    statusEmbedding: 'Gerando vetor semântico via Voyage AI…',
+    statusMap:      'Atualizando mapa global…',
+    statusDone:     (n) => `✓ Pontuado contra ${n.toLocaleString()} ideia${n !== 1 ? 's' : ''} no mapa`,
+    nearLabel:      'Próx',
+    commonLabel:    'COMUM',
+    novelLabel:     'INÉDITO',
+    nearestDb:      'MAIS PRÓXIMOS NA BASE',
+    simLabel:       '% sim',
+    driftRefine:    'Iterar →',
+    sessionLog:     (n) => `REGISTRO — ${n} IDEIA${n !== 1 ? 'S' : ''} ESCANEADA${n !== 1 ? 'S' : ''}`,
+    globalMap:      (n) => `MAPA GLOBAL — ${n} IDEIAS`,
+    densityLabels: {
+      SATURATED: 'SATURADO',
+      DENSE:     'DENSO',
+      POPULATED: 'POPULADO',
+      SPARSE:    'ESPARSO',
+      FRONTIER:  'FRONTEIRA',
+      VOID:      'VAZIO',
+    },
+    emptyBody: 'Sua ideia é convertida em um vetor semântico real de 1024 dimensões via Voyage AI. A distância cosseno para cada ideia armazenada gera uma pontuação objetiva de originalidade.',
+    allDomains: 'Todos',
+    filterLabel: 'FILTRAR POR DOMÍNIO',
+    liveLabel:  'AO VIVO',
+  },
+};

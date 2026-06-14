@@ -1,47 +1,57 @@
-// backend/src/index.js
+// backend/src/index.js — V2: WebSocket multiplayer + domain filtering
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import { createServer } from 'http';
+import { WebSocketServer } from 'ws';
 import { scanIdea, getMap, getStats } from './api/ideas.js';
+import { setBroadcaster } from './services/broadcast.js';
 
 dotenv.config();
 
 const app = express();
+const server = createServer(app); // shared HTTP+WS server
 const PORT = process.env.PORT || 3001;
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 
-// Middleware
-app.use(cors({
-  origin: FRONTEND_URL,
-  credentials: true
-}));
-app.use(express.json({ limit: '10kb' }));
+// ── WebSocket Server ────────────────────────────────────────────────────────
+const wss = new WebSocketServer({ server, path: '/ws' });
 
-// Health check
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+wss.on('connection', (ws) => {
+  console.log(`WS client connected (${wss.clients.size} total)`);
+  ws.on('close', () => console.log(`WS client left (${wss.clients.size} remain)`));
+  ws.on('error', (err) => console.error('WS error:', err.message));
 });
 
-// Ideas API
+// Give the broadcast function to the ideas API so it can push new ideas
+setBroadcaster((payload) => {
+  const msg = JSON.stringify(payload);
+  for (const client of wss.clients) {
+    if (client.readyState === 1) client.send(msg);
+  }
+});
+
+// ── Middleware ───────────────────────────────────────────────────────────────
+app.use(cors({ origin: FRONTEND_URL, credentials: true }));
+app.use(express.json({ limit: '10kb' }));
+
+// ── Routes ───────────────────────────────────────────────────────────────────
+app.get('/health', (_req, res) =>
+  res.json({ status: 'ok', clients: wss.clients.size, timestamp: new Date().toISOString() }));
+
 app.post('/api/ideas/scan', scanIdea);
 app.get('/api/ideas/map', getMap);
 app.get('/api/ideas/stats', getStats);
 
-// 404
-app.use((req, res) => {
-  res.status(404).json({ error: 'Not found' });
-});
+// ── 404 / Error ──────────────────────────────────────────────────────────────
+app.use((_req, res) => res.status(404).json({ error: 'Not found' }));
 
-// Error handler
-app.use((err, req, res, next) => {
+app.use((err, _req, res, _next) => {
   console.error(err);
   res.status(err.status || 500).json({
-    error: process.env.NODE_ENV === 'production'
-      ? 'Internal server error'
-      : err.message
+    error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message,
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`✓ Originality Radar backend running on http://localhost:${PORT}`);
-});
+server.listen(PORT, () =>
+  console.log(`✓ Originality Radar V2 on http://localhost:${PORT} (WS on /ws)`));

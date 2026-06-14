@@ -1,8 +1,7 @@
 # Originality Radar
 
-A real vector-math topological map of human thought. Submit an idea, get scored against every idea ever submitted globally via cosine similarity. Watch the shared map grow denser over time.
+A real vector-math topological map of human thought. Submit an idea, get scored against every idea ever submitted globally via cosine similarity. The shared map should grow denser over time.
 
-**Not LLM vibes — actual semantic vectors + math.**
 
 ## The Tech Stack
 
@@ -286,38 +285,6 @@ Every submission adds a vector to the database. Over time:
 
 A `VOID` idea (score 95) today might become `FRONTIER` (score 78) in 6 months if 1000 people converge on that space.
 
-## Key Design Decisions
-
-### Why Anthropic's API for Embeddings?
-
-We could use OpenAI or open-source embeddings, but Anthropic's approach lets us:
-1. Generate vectors via Claude's reasoning (more consistent)
-2. Get structured JSON output (no parsing image data)
-3. Control the 64 dimensions explicitly (not a black box)
-4. Avoid model updates breaking consistency
-
-### Why pgvector (not Pinecone/Qdrant)?
-
-- **pgvector is built into Supabase** — no separate infrastructure
-- Free tier handles 100k+ vectors easily
-- Full SQL queries (filter by date, sort, aggregate)
-- Open source — can self-host if needed
-- No vendor lock-in
-
-### Why Cosine Similarity (not Euclidean)?
-
-- Cosine is invariant to magnitude (direction = meaning, not scale)
-- Two very similar ideas will have cosine ≈ 0.95
-- Two unrelated ideas will have cosine ≈ 0.1
-- Natural scale: 0 (perpendicular) to 1 (identical)
-
-## Contributing
-
-1. Fork the repo
-2. Create a feature branch: `git checkout -b feature/your-idea`
-3. Make changes
-4. Test locally
-5. Submit PR
 
 ## License
 
@@ -341,4 +308,3 @@ MIT
 
 ---
 
-**Built with the belief that originality is measurable. No vibes, just math.**
