@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Originality Radar — Map of Human Thought</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --void:      #070a12;
+    --deep:      #0c1121;
+    --ink:       #0f1b35;
+    --grid:      #131d30;
+    --muted:     #2a3a52;
+    --dim:       #445566;
+    --mid:       #6a7d94;
+    --soft:      #99aabb;
+    --white:     #e8edf5;
+
+    --saturated: #ff3333;
+    --dense:     #ff8833;
+    --populated: #ffcc33;
+    --sparse:    #33ddaa;
+    --frontier:  #33aaff;
+    --void-col:  #aa55ff;
+
+    --font-display: 'Space Grotesk', sans-serif;
+    --font-mono:    'IBM Plex Mono', monospace;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--void);
+    color: var(--white);
+    font-family: var(--font-display);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── HERO ─────────────────────────────────────────────── */
+  .hero {
+    position: relative;
+    height: 100vh;
+    min-height: 640px;
+    display: flex;
+    align-items: flex-end;
+    padding: 0 0 72px 64px;
+    overflow: hidden;
+  }
+  @media (max-width: 640px) { .hero { padding: 0 24px 56px; } }
+
+  #hero-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%; height: 100%;
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 2;
+    max-width: 560px;
+  }
+
+  .hero-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--dim);
+    margin-bottom: 20px;
+    text-transform: uppercase;
+  }
+
+  .hero-title {
+    font-size: clamp(48px, 7vw, 88px);
+    font-weight: 600;
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+    color: var(--white);
+    margin-bottom: 28px;
+  }
+
+  .hero-title em {
+    font-style: normal;
+    color: var(--void-col);
+    text-shadow: 0 0 60px rgba(170,85,255,0.4);
+  }
+
+  .hero-sub {
+    font-size: 16px;
+    font-weight: 300;
+    line-height: 1.65;
+    color: var(--soft);
+    max-width: 420px;
+    margin-bottom: 40px;
+  }
+
+  .hero-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: transparent;
+    border: 1px solid var(--frontier);
+    color: var(--frontier);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    letter-spacing: 0.1em;
+    padding: 14px 28px;
+    text-decoration: none;
+    border-radius: 2px;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  }
+  .hero-cta:hover {
+    background: var(--frontier);
+    color: var(--void);
+    box-shadow: 0 0 40px rgba(51,170,255,0.3);
+  }
+  .hero-cta svg { width: 14px; height: 14px; }
+
+  /* live dot */
+  .live-badge {
+    position: absolute;
+    top: 32px; right: 40px;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: var(--sparse);
+  }
+  .live-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--sparse);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(51,221,170,0.4); }
+    50% { opacity: 0.7; box-shadow: 0 0 0 6px rgba(51,221,170,0); }
+  }
+
+  /* scroll hint */
+  .scroll-hint {
+    position: absolute;
+    bottom: 28px; right: 40px;
+    z-index: 2;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  .scroll-line {
+    width: 1px; height: 40px;
+    background: linear-gradient(to bottom, var(--muted), transparent);
+    animation: scrollDrop 2s ease-in-out infinite;
+  }
+  @keyframes scrollDrop {
+    0% { transform: scaleY(0); transform-origin: top; opacity: 0; }
+    50% { transform: scaleY(1); opacity: 1; }
+    100% { transform: scaleY(0); transform-origin: bottom; opacity: 0; }
+  }
+
+  /* ── CONCEPT ──────────────────────────────────────────── */
+  section { padding: 100px 64px; }
+  @media (max-width: 640px) { section { padding: 72px 24px; } }
+
+  .section-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--dim);
+    text-transform: uppercase;
+    margin-bottom: 48px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    max-width: 80px;
+    height: 1px;
+    background: var(--grid);
+  }
+
+  .concept-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+    max-width: 980px;
+  }
+  @media (max-width: 700px) { .concept-grid { grid-template-columns: 1fr; } }
+
+  .concept-cell {
+    background: var(--deep);
+    padding: 40px 36px;
+  }
+  .concept-cell:first-child { border-top-left-radius: 4px; }
+  .concept-cell:nth-child(2) { border-top-right-radius: 4px; }
+  .concept-cell:nth-last-child(2) { border-bottom-left-radius: 4px; }
+  .concept-cell:last-child { border-bottom-right-radius: 4px; }
+
+  .concept-cell h3 {
+    font-size: 22px;
+    font-weight: 500;
+    margin-bottom: 14px;
+    letter-spacing: -0.02em;
+  }
+  .concept-cell p {
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--soft);
+    font-weight: 300;
+  }
+  .concept-icon {
+    font-size: 28px;
+    margin-bottom: 20px;
+    display: block;
+  }
+
+  /* ── HOW IT WORKS ─────────────────────────────────────── */
+  .how-bg { background: var(--deep); }
+
+  .pipeline {
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 8px;
+    max-width: 1100px;
+  }
+  .pipeline::-webkit-scrollbar { display: none; }
+
+  .pipe-step {
+    flex: 0 0 220px;
+    padding: 32px 28px;
+    position: relative;
+  }
+  .pipe-step + .pipe-step::before {
+    content: '→';
+    position: absolute;
+    left: -10px;
+    top: 36px;
+    color: var(--muted);
+    font-size: 18px;
+  }
+
+  .pipe-num {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.15em;
+    margin-bottom: 12px;
+  }
+
+  .pipe-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    letter-spacing: -0.01em;
+  }
+
+  .pipe-desc {
+    font-size: 12.5px;
+    line-height: 1.6;
+    color: var(--soft);
+    font-weight: 300;
+  }
+
+  .pipe-tag {
+    display: inline-block;
+    margin-top: 14px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 2px;
+    letter-spacing: 0.08em;
+  }
+
+  /* ── DENSITY SCALE ────────────────────────────────────── */
+  .density-row {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    max-width: 900px;
+  }
+
+  .density-band {
+    display: grid;
+    grid-template-columns: 110px 60px 1fr auto;
+    align-items: center;
+    gap: 20px;
+    padding: 18px 24px;
+    background: var(--deep);
+    border-radius: 3px;
+    transition: background 0.2s;
+  }
+  .density-band:hover { background: var(--ink); }
+
+  @media (max-width: 600px) {
+    .density-band { grid-template-columns: 90px 50px 1fr; }
+    .density-example { display: none; }
+  }
+
+  .density-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+  }
+
+  .density-range {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--dim);
+  }
+
+  .density-desc {
+    font-size: 13px;
+    color: var(--soft);
+    font-weight: 300;
+    line-height: 1.5;
+  }
+
+  .density-example {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted);
+    text-align: right;
+    font-style: italic;
+  }
+
+  /* ── REAL RESULTS ─────────────────────────────────────── */
+  .results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2px;
+    max-width: 1000px;
+  }
+
+  .result-card {
+    background: var(--deep);
+    padding: 28px;
+    border-radius: 3px;
+  }
+
+  .result-score-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .result-score {
+    font-family: var(--font-mono);
+    font-size: 36px;
+    font-weight: 500;
+    line-height: 1;
+  }
+
+  .result-density-tag {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    padding: 4px 10px;
+    border-radius: 2px;
+    font-weight: 500;
+  }
+
+  .result-idea {
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--white);
+    margin-bottom: 14px;
+    font-weight: 400;
+  }
+
+  .result-novel {
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--soft);
+    font-weight: 300;
+    border-left: 2px solid var(--muted);
+    padding-left: 12px;
+    margin-bottom: 14px;
+  }
+
+  .result-neighbors {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .neighbor-tag {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--dim);
+    background: var(--grid);
+    padding: 3px 8px;
+    border-radius: 2px;
+  }
+
+  /* ── MATH ─────────────────────────────────────────────── */
+  .math-bg { background: var(--void); }
+
+  .math-block {
+    background: var(--deep);
+    border: 1px solid var(--grid);
+    border-radius: 4px;
+    padding: 36px 40px;
+    max-width: 700px;
+    margin-bottom: 32px;
+  }
+
+  .math-title {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--dim);
+    margin-bottom: 20px;
+    text-transform: uppercase;
+  }
+
+  .math-formula {
+    font-family: var(--font-mono);
+    font-size: 18px;
+    color: var(--frontier);
+    letter-spacing: -0.01em;
+    line-height: 1.6;
+    margin-bottom: 16px;
+  }
+
+  .math-explain {
+    font-size: 13px;
+    color: var(--soft);
+    line-height: 1.7;
+    font-weight: 300;
+  }
+
+  /* ── TECH STACK ───────────────────────────────────────── */
+  .stack-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 2px;
+    max-width: 900px;
+  }
+
+  .stack-cell {
+    background: var(--deep);
+    padding: 24px 28px;
+    border-radius: 3px;
+  }
+
+  .stack-layer {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--dim);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .stack-name {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+
+  .stack-detail {
+    font-size: 12px;
+    color: var(--soft);
+    font-weight: 300;
+    line-height: 1.5;
+  }
+
+  /* ── CTA ──────────────────────────────────────────────── */
+  .cta-section {
+    background: var(--deep);
+    text-align: center;
+    padding: 120px 40px;
+  }
+
+  .cta-pre {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--dim);
+    margin-bottom: 24px;
+    text-transform: uppercase;
+  }
+
+  .cta-headline {
+    font-size: clamp(32px, 5vw, 64px);
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+    margin-bottom: 20px;
+  }
+
+  .cta-sub {
+    font-size: 16px;
+    color: var(--soft);
+    font-weight: 300;
+    max-width: 440px;
+    margin: 0 auto 48px;
+    line-height: 1.6;
+  }
+
+  .cta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--void-col);
+    color: var(--void);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    padding: 16px 36px;
+    text-decoration: none;
+    border-radius: 2px;
+    transition: box-shadow 0.2s, transform 0.2s;
+  }
+  .cta-btn:hover {
+    box-shadow: 0 0 60px rgba(170,85,255,0.5);
+    transform: translateY(-1px);
+  }
+
+  /* ── FOOTER ───────────────────────────────────────────── */
+  footer {
+    padding: 32px 64px;
+    border-top: 1px solid var(--grid);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted);
+  }
+  @media (max-width: 600px) {
+    footer { flex-direction: column; gap: 12px; padding: 24px; text-align: center; }
+  }
+
+  /* ── UTILS ────────────────────────────────────────────── */
+  .max { max-width: 980px; }
+
+  h2 {
+    font-size: clamp(28px, 4vw, 48px);
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    margin-bottom: 20px;
+  }
+
+  .intro-p {
+    font-size: 16px;
+    color: var(--soft);
+    font-weight: 300;
+    line-height: 1.7;
+    max-width: 580px;
+    margin-bottom: 56px;
+  }
+
+  /* scroll-reveal */
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: none;
+  }
+</style>
+</head>
+<body>
+
+<!-- ── HERO ─────────────────────────────────────────── -->
+<section class="hero">
+  <canvas id="hero-canvas"></canvas>
+
+  <div class="live-badge">
+    <div class="live-dot"></div>
+    LIVE · GLOBAL MAP
+  </div>
+
+  <div class="hero-content">
+    <p class="hero-eyebrow">Originality Radar · v1.0 · Voyage AI Embeddings</p>
+    <h1 class="hero-title">
+      Map of<br>human<br><em>thought.</em>
+    </h1>
+    <p class="hero-sub">
+      Submit an idea. Real vector math tells you how far you are from every thought humans have already had. Sail toward the void.
+    </p>
+    <a href="#" class="hero-cta">
+      Open the radar
+      <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M1 7h12M7 1l6 6-6 6"/>
+      </svg>
+    </a>
+  </div>
+
+  <div class="scroll-hint">
+    <div class="scroll-line"></div>
+    SCROLL
+  </div>
+</section>
+
+<!-- ── CONCEPT ───────────────────────────────────────── -->
+<section>
+  <div class="section-label reveal">The Idea</div>
+  <div class="max">
+    <h2 class="reveal">The inverse Akinator.</h2>
+    <p class="intro-p reveal">
+      Akinator narrows toward what everyone knows. This does the opposite — it measures how far your idea sits from the dense clusters of human thinking, in a real high-dimensional vector space.
+    </p>
+    <div class="concept-grid reveal">
+      <div class="concept-cell">
+        <span class="concept-icon">🗺️</span>
+        <h3>Topology of curiosity</h3>
+        <p>When humans ask similar things, that region of thought-space becomes dense. Your idea gets embedded as a coordinate and measured against every other coordinate in the database.</p>
+      </div>
+      <div class="concept-cell">
+        <span class="concept-icon">📐</span>
+        <h3>Real cosine distance</h3>
+        <p>Not vibes. Not an LLM guessing. Voyage AI produces deterministic semantic vectors. The same idea submitted twice gives nearly identical coordinates. The math is reproducible.</p>
+      </div>
+      <div class="concept-cell">
+        <span class="concept-icon">🌌</span>
+        <h3>The map grows denser</h3>
+        <p>Every submission enriches the global database. A VOID idea today (score 95) may become FRONTIER (score 78) in six months as others converge on that space. Originality is relative and evolving.</p>
+      </div>
+      <div class="concept-cell">
+        <span class="concept-icon">🧭</span>
+        <h3>Drift toward the edge</h3>
+        <p>The radar doesn't just score you — it suggests a specific constraint you can add to push your idea further from any known cluster. Turn brainstorming into exploration.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── HOW IT WORKS ──────────────────────────────────── -->
+<section class="how-bg">
+  <div class="section-label reveal">Pipeline</div>
+  <div class="max">
+    <h2 class="reveal">From text to coordinate.</h2>
+    <p class="intro-p reveal">Eight steps. No black box scoring. Each stage is inspectable.</p>
+  </div>
+  <div class="pipeline reveal">
+    <div class="pipe-step">
+      <div class="pipe-num">01</div>
+      <div class="pipe-title">Idea submitted</div>
+      <div class="pipe-desc">User submits plain text. No structure required — a sentence, a paragraph, a fragment.</div>
+      <span class="pipe-tag" style="background:#0f1b35; color:var(--frontier);">POST /api/ideas/scan</span>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-num">02</div>
+      <div class="pipe-title">Voyage embedding</div>
+      <div class="pipe-desc">Backend calls Voyage AI to produce a deterministic high-dimensional semantic vector.</div>
+      <span class="pipe-tag" style="background:#0f1b35; color:var(--sparse);">voyage-3-large</span>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-num">03</div>
+      <div class="pipe-title">pgvector insert</div>
+      <div class="pipe-desc">Vector stored in Supabase PostgreSQL with the pgvector extension. Persists globally across all users.</div>
+      <span class="pipe-tag" style="background:#0f1b35; color:var(--populated);">pgvector · Supabase</span>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-num">04</div>
+      <div class="pipe-title">k-NN query</div>
+      <div class="pipe-desc">Find the 10 nearest neighbors by cosine distance. These are the closest ideas already in the database.</div>
+      <span class="pipe-tag" style="background:#0f1b35; color:var(--populated);">k=10 neighbors</span>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-num">05</div>
+      <div class="pipe-title">Score computed</div>
+      <div class="pipe-desc">Originality score = (1 − avg cosine similarity) × 100. Pure math. High distance = high score.</div>
+      <span class="pipe-tag" style="background:#0f1b35; color:var(--dense);">cosine distance</span>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-num">06</div>
+      <div class="pipe-title">2D projection</div>
+      <div class="pipe-desc">All vectors projected to 2D via PCA for the global map canvas. Similar ideas cluster naturally.</div>
+      <span class="pipe-tag" style="background:#0f1b35; color:var(--sparse);">PCA projection</span>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-num">07</div>
+      <div class="pipe-title">LLM narrative</div>
+      <div class="pipe-desc">Claude analyzes what makes the idea common vs. novel, and suggests a specific drift vector to push further.</div>
+      <span class="pipe-tag" style="background:#0f1b35; color:var(--frontier);">claude-sonnet-4-6</span>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-num">08</div>
+      <div class="pipe-title">Map updated</div>
+      <div class="pipe-desc">The global idea map gains one more coordinate. The topology shifts, however slightly, for everyone.</div>
+      <span class="pipe-tag" style="background:#0f1b35; color:var(--void-col);">shared state</span>
+    </div>
+  </div>
+</section>
+
+<!-- ── DENSITY SCALE ─────────────────────────────────── -->
+<section>
+  <div class="section-label reveal">Density Scale</div>
+  <div class="max">
+    <h2 class="reveal">Where does your idea live?</h2>
+    <p class="intro-p reveal">Six zones. Each corresponds to a real range of cosine distances from the existing database.</p>
+    <div class="density-row reveal">
+      <div class="density-band">
+        <span class="density-label" style="color:var(--saturated)">SATURATED</span>
+        <span class="density-range">0 – 15</span>
+        <span class="density-desc">Millions of people have thought this exact combination. Every startup pitch deck has it.</span>
+        <span class="density-example">"social media app"</span>
+      </div>
+      <div class="density-band">
+        <span class="density-label" style="color:var(--dense)">DENSE</span>
+        <span class="density-range">16 – 35</span>
+        <span class="density-desc">Well-explored territory with heavy prior art. Common combinations, well-funded companies nearby.</span>
+        <span class="density-example">"AI-powered CRM"</span>
+      </div>
+      <div class="density-band">
+        <span class="density-label" style="color:var(--populated)">POPULATED</span>
+        <span class="density-range">36 – 55</span>
+        <span class="density-desc">Known territory with a distinguishing angle. Prior art exists but isn't exhaustive.</span>
+        <span class="density-example">"dating app for readers"</span>
+      </div>
+      <div class="density-band">
+        <span class="density-label" style="color:var(--sparse)">SPARSE</span>
+        <span class="density-range">56 – 75</span>
+        <span class="density-desc">Unusual domain intersection. Few have connected these dots, and none at scale.</span>
+        <span class="density-example">"EEG-controlled ferrofluid instrument"</span>
+      </div>
+      <div class="density-band">
+        <span class="density-label" style="color:var(--frontier)">FRONTIER</span>
+        <span class="density-range">76 – 90</span>
+        <span class="density-desc">Genuinely novel. Hard to find prior art. You'd need to explain the concept from scratch to most people.</span>
+        <span class="density-example">"topology-aware dream compiler"</span>
+      </div>
+      <div class="density-band">
+        <span class="density-label" style="color:var(--void-col)">VOID</span>
+        <span class="density-range">91 – 100</span>
+        <span class="density-desc">Alien territory. No meaningful cluster nearby. Possibly unthought of, possibly unthinkable.</span>
+        <span class="density-example">"???"</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── REAL RESULTS ───────────────────────────────────── -->
+<section class="how-bg">
+  <div class="section-label reveal">Live Examples</div>
+  <div class="max">
+    <h2 class="reveal">Real scans from the map.</h2>
+    <p class="intro-p reveal">These are actual results from the live database, scored against real neighbors.</p>
+    <div class="results-grid reveal">
+      <div class="result-card">
+        <div class="result-score-row">
+          <span class="result-score" style="color:var(--populated)">47</span>
+          <span class="result-density-tag" style="background:#ffcc3318; color:var(--populated); border:1px solid #ffcc3333">POPULATED</span>
+        </div>
+        <p class="result-idea">The idea that Ronaldo knows more about human nature than we think — he knows exactly where his character starts, where his brand starts and ends.</p>
+        <p class="result-novel">Framing a public figure as a systems-theorist of the self is an angle the celebrity-analysis cluster hasn't explored.</p>
+        <div class="result-neighbors">
+          <span class="neighbor-tag">celebrity behavior analysis</span>
+          <span class="neighbor-tag">sports philosophy</span>
+          <span class="neighbor-tag">personal branding</span>
+        </div>
+      </div>
+      <div class="result-card">
+        <div class="result-score-row">
+          <span class="result-score" style="color:var(--sparse)">57</span>
+          <span class="result-density-tag" style="background:#33ddaa18; color:var(--sparse); border:1px solid #33ddaa33">SPARSE</span>
+        </div>
+        <p class="result-idea">A musical instrument played entirely by manipulating magnetic fields in a ferrofluid bath, controlled via a brainwave EEG headset.</p>
+        <p class="result-novel">Manipulating a ferrofluid bath via EEG to create music has no meaningful prior art in this exact configuration.</p>
+        <div class="result-neighbors">
+          <span class="neighbor-tag">electronic instruments</span>
+          <span class="neighbor-tag">brain-computer interface</span>
+          <span class="neighbor-tag">ferrofluid art</span>
+        </div>
+      </div>
+      <div class="result-card">
+        <div class="result-score-row">
+          <span class="result-score" style="color:var(--sparse)">63</span>
+          <span class="result-density-tag" style="background:#33ddaa18; color:var(--sparse); border:1px solid #33ddaa33">SPARSE</span>
+        </div>
+        <p class="result-idea">dating app for people who like reading</p>
+        <p class="result-novel">A dating app where book taste is the primary matching signal — not personality traits, not photos, not location.</p>
+        <div class="result-neighbors">
+          <span class="neighbor-tag">niche dating apps</span>
+          <span class="neighbor-tag">book social networks</span>
+          <span class="neighbor-tag">Goodreads</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── MATH ──────────────────────────────────────────── -->
+<section>
+  <div class="section-label reveal">The Math</div>
+  <div class="max">
+    <h2 class="reveal">Scoring formula.</h2>
+    <p class="intro-p reveal">One equation. No learned weights, no prompt-tuned scores.</p>
+    <div class="math-block reveal">
+      <div class="math-title">Originality Score</div>
+      <div class="math-formula">O(x) = (1 − (1/k) Σ cos_sim(x, xᵢ)) × 100</div>
+      <p class="math-explain">
+        Where <strong style="color:var(--white)">x</strong> is your idea's vector, <strong style="color:var(--white)">xᵢ</strong> are the k nearest neighbors in the database, and cos_sim measures directional alignment in high-dimensional space. A score near 0 means you're pointing in exactly the same direction as the crowd. A score near 100 means you're pointing somewhere no one has pointed before.
+      </p>
+    </div>
+    <div class="math-block reveal">
+      <div class="math-title">Why Deterministic Embeddings Matter</div>
+      <p class="math-explain">
+        The same idea submitted twice should produce almost identical scores. Voyage AI embeddings are stable — not sampled, not temperature-dependent. This means the map is reproducible. If your idea scores 73 today, it scores ~73 tomorrow, unless the database grows and new neighbors appear near you. The score changes only as the map fills in around you.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ── TECH STACK ─────────────────────────────────────── -->
+<section class="how-bg">
+  <div class="section-label reveal">Stack</div>
+  <div class="max">
+    <h2 class="reveal">What's running under it.</h2>
+    <p class="intro-p reveal">Open source. Self-hostable. Every component is swappable.</p>
+    <div class="stack-grid reveal">
+      <div class="stack-cell">
+        <div class="stack-layer">Embeddings</div>
+        <div class="stack-name" style="color:var(--frontier)">Voyage AI</div>
+        <div class="stack-detail">voyage-3-large. Deterministic, high-dimensional semantic vectors. Swappable for OpenAI or local models.</div>
+      </div>
+      <div class="stack-cell">
+        <div class="stack-layer">Vector DB</div>
+        <div class="stack-name" style="color:var(--sparse)">Supabase + pgvector</div>
+        <div class="stack-detail">PostgreSQL with the pgvector extension. k-NN queries in SQL. Free tier covers thousands of ideas.</div>
+      </div>
+      <div class="stack-cell">
+        <div class="stack-layer">Narrative</div>
+        <div class="stack-name" style="color:var(--void-col)">Claude Sonnet</div>
+        <div class="stack-detail">Analyzes what makes the idea common vs. novel. Generates domain-specific drift suggestions.</div>
+      </div>
+      <div class="stack-cell">
+        <div class="stack-layer">Backend</div>
+        <div class="stack-name" style="color:var(--populated)">Node.js + Express</div>
+        <div class="stack-detail">REST API. POST /ideas/scan, GET /ideas/map. Runs on Railway or any Node host.</div>
+      </div>
+      <div class="stack-cell">
+        <div class="stack-layer">Frontend</div>
+        <div class="stack-name" style="color:var(--populated)">React + Vite</div>
+        <div class="stack-detail">Canvas-based global map. Real-time score meter. Domain filter chips. Deploys to Vercel.</div>
+      </div>
+      <div class="stack-cell">
+        <div class="stack-layer">Projection</div>
+        <div class="stack-name" style="color:var(--dense)">PCA</div>
+        <div class="stack-detail">Principal Component Analysis reduces high-dimensional vectors to 2D for the global map canvas. Distance is preserved.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── CTA ───────────────────────────────────────────── -->
+<section class="cta-section">
+  <p class="cta-pre reveal">Ready?</p>
+  <h2 class="cta-headline reveal">How far can<br>you get?</h2>
+  <p class="cta-sub reveal">The global map has ideas already. Every scan adds one more coordinate. The topology is real, shared, and growing.</p>
+  <a href="#" class="cta-btn reveal">
+    Open the radar
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
+      <path d="M1 7h12M7 1l6 6-6 6"/>
+    </svg>
+  </a>
+</section>
+
+<!-- ── FOOTER ─────────────────────────────────────────── -->
+<footer>
+  <span>Originality Radar · MIT License</span>
+  <span style="color:var(--grid)">·</span>
+  <span>Voyage AI · Supabase pgvector · Claude Sonnet · React</span>
+  <span style="color:var(--grid)">·</span>
+  <a href="#" style="color:var(--muted); text-decoration:none;">GitHub →</a>
+</footer>
+
+<script>
+// ── Hero canvas particle field ────────────────────────
+(function() {
+  const canvas = document.getElementById('hero-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, particles = [], clusters = [];
+  const COLORS = ['#ff3333','#ff8833','#ffcc33','#33ddaa','#33aaff','#aa55ff'];
+
+  function resize() {
+    W = canvas.width = canvas.offsetWidth * devicePixelRatio;
+    H = canvas.height = canvas.offsetHeight * devicePixelRatio;
+    ctx.scale(devicePixelRatio, devicePixelRatio);
+    W /= devicePixelRatio; H /= devicePixelRatio;
+  }
+  window.addEventListener('resize', () => { resize(); init(); });
+
+  function init() {
+    particles = [];
+    clusters = [];
+
+    // Sparse ambient particles — right half weighted (the "void")
+    for (let i = 0; i < 180; i++) {
+      const rightBias = Math.random() < 0.65;
+      particles.push({
+        x: rightBias ? W * 0.4 + Math.random() * W * 0.6 : Math.random() * W,
+        y: Math.random() * H,
+        r: Math.random() * 1.2 + 0.3,
+        alpha: Math.random() * 0.25 + 0.04,
+        vx: (Math.random() - 0.5) * 0.15,
+        vy: (Math.random() - 0.5) * 0.15,
+        color: '#2a3a52',
+      });
+    }
+
+    // Left-side clusters (dense zones)
+    const clusterCenters = [
+      { x: W * 0.08, y: H * 0.3, color: '#ff3333', count: 40, spread: 60 },
+      { x: W * 0.15, y: H * 0.55, color: '#ff8833', count: 28, spread: 50 },
+      { x: W * 0.22, y: H * 0.2, color: '#ffcc33', count: 20, spread: 40 },
+      { x: W * 0.3, y: H * 0.7, color: '#33ddaa', count: 14, spread: 45 },
+      { x: W * 0.45, y: H * 0.4, color: '#33aaff', count: 8, spread: 55 },
+      { x: W * 0.72, y: H * 0.3, color: '#aa55ff', count: 3, spread: 20 },
+    ];
+
+    clusterCenters.forEach(c => {
+      for (let i = 0; i < c.count; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const dist = Math.pow(Math.random(), 0.5) * c.spread;
+        particles.push({
+          x: c.x + Math.cos(angle) * dist,
+          y: c.y + Math.sin(angle) * dist,
+          r: Math.random() * 2 + 0.6,
+          alpha: Math.random() * 0.55 + 0.2,
+          vx: (Math.random() - 0.5) * 0.08,
+          vy: (Math.random() - 0.5) * 0.08,
+          color: c.color,
+        });
+      }
+      clusters.push(c);
+    });
+  }
+
+  function drawConnections() {
+    clusters.forEach(c => {
+      const nearby = particles.filter(p => {
+        const dx = p.x - c.x, dy = p.y - c.y;
+        return Math.sqrt(dx*dx + dy*dy) < c.spread * 1.3 && p.color === c.color;
+      });
+      nearby.forEach(p => {
+        ctx.beginPath();
+        ctx.moveTo(c.x, c.y);
+        ctx.lineTo(p.x, p.y);
+        const alpha = 0.06;
+        ctx.strokeStyle = c.color;
+        ctx.globalAlpha = alpha;
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+      });
+    });
+  }
+
+  let raf;
+  function animate() {
+    ctx.clearRect(0, 0, W, H);
+
+    // Subtle right-side vignette (the void)
+    const grad = ctx.createRadialGradient(W*0.75, H*0.5, 0, W*0.75, H*0.5, W*0.4);
+    grad.addColorStop(0, 'rgba(170,85,255,0.03)');
+    grad.addColorStop(1, 'transparent');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    drawConnections();
+
+    for (const p of particles) {
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < -10) p.x = W + 10;
+      if (p.x > W + 10) p.x = -10;
+      if (p.y < -10) p.y = H + 10;
+      if (p.y > H + 10) p.y = -10;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = p.alpha;
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    // Cluster halos
+    clusters.forEach(c => {
+      const g = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, c.spread * 1.8);
+      g.addColorStop(0, c.color + '18');
+      g.addColorStop(1, 'transparent');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+    });
+
+    raf = requestAnimationFrame(animate);
+  }
+
+  resize(); init(); animate();
+})();
+
+// ── Scroll reveal ────────────────────────────────────
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('visible');
+      // stagger children
+      Array.from(e.target.children).forEach((child, i) => {
+        child.style.transitionDelay = `${i * 80}ms`;
+      });
+    }
+  });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>
