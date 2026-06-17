@@ -3,1029 +3,1105 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Originality Radar — Map of Human Thought</title>
+<title>Originality Radar — Topological Map of Human Thought</title>
+<meta name="description" content="Submit an idea. Real vector math scores it against every idea in the global database via cosine similarity. Built on Voyage AI embeddings, pgvector, and Claude.">
+<meta property="og:title" content="Originality Radar">
+<meta property="og:description" content="A real vector-math topological map of human thought.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  :root {
-    --void:      #070a12;
-    --deep:      #0c1121;
-    --ink:       #0f1b35;
-    --grid:      #131d30;
-    --muted:     #2a3a52;
-    --dim:       #445566;
-    --mid:       #6a7d94;
-    --soft:      #99aabb;
-    --white:     #e8edf5;
+:root {
+  --bg:        #07090f;
+  --surface:   #0d1117;
+  --border:    #161d2b;
+  --muted:     #1e2a3a;
+  --dim:       #3a4f66;
+  --mid:       #5a7090;
+  --soft:      #8fa3b8;
+  --white:     #dde4ee;
 
-    --saturated: #ff3333;
-    --dense:     #ff8833;
-    --populated: #ffcc33;
-    --sparse:    #33ddaa;
-    --frontier:  #33aaff;
-    --void-col:  #aa55ff;
+  --sat:   #ff3333;
+  --dense: #ff8833;
+  --pop:   #ffcc33;
+  --spa:   #33ddaa;
+  --fro:   #33aaff;
+  --void:  #aa55ff;
 
-    --font-display: 'Space Grotesk', sans-serif;
-    --font-mono:    'IBM Plex Mono', monospace;
-  }
+  --mono: 'DM Mono', monospace;
+  --sans: 'Inter', sans-serif;
+}
 
-  html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--white);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
 
-  body {
-    background: var(--void);
-    color: var(--white);
-    font-family: var(--font-display);
-    overflow-x: hidden;
-    -webkit-font-smoothing: antialiased;
-  }
+/* ── HERO ──────────────────────────────────────────────────── */
+.hero {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 100vh;
+  position: relative;
+}
+@media (max-width: 768px) {
+  .hero { grid-template-columns: 1fr; min-height: auto; }
+}
 
-  /* ── HERO ─────────────────────────────────────────────── */
-  .hero {
-    position: relative;
-    height: 100vh;
-    min-height: 640px;
-    display: flex;
-    align-items: flex-end;
-    padding: 0 0 72px 64px;
-    overflow: hidden;
-  }
-  @media (max-width: 640px) { .hero { padding: 0 24px 56px; } }
+.hero-left {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 80px 56px;
+  position: relative;
+  z-index: 2;
+}
+@media (max-width: 768px) { .hero-left { padding: 80px 28px 40px; } }
 
-  #hero-canvas {
-    position: absolute;
-    inset: 0;
-    width: 100%; height: 100%;
-  }
+.hero-eyebrow {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: var(--dim);
+  text-transform: uppercase;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.live-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--spa);
+  animation: livepulse 2.4s ease-in-out infinite;
+  flex-shrink: 0;
+}
+@keyframes livepulse {
+  0%,100% { opacity:1; box-shadow: 0 0 0 0 rgba(51,221,170,.5); }
+  50% { opacity:.6; box-shadow: 0 0 0 5px rgba(51,221,170,0); }
+}
 
-  .hero-content {
-    position: relative;
-    z-index: 2;
-    max-width: 560px;
-  }
+.hero-title {
+  font-family: var(--mono);
+  font-size: clamp(40px, 5.5vw, 72px);
+  font-weight: 400;
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+  color: var(--white);
+  margin-bottom: 32px;
+}
+.hero-title .accent { color: var(--void); }
 
-  .hero-eyebrow {
-    font-family: var(--font-mono);
-    font-size: 11px;
-    letter-spacing: 0.2em;
-    color: var(--dim);
-    margin-bottom: 20px;
-    text-transform: uppercase;
-  }
+.hero-sub {
+  font-size: 15px;
+  font-weight: 300;
+  line-height: 1.7;
+  color: var(--soft);
+  max-width: 380px;
+  margin-bottom: 44px;
+}
 
-  .hero-title {
-    font-size: clamp(48px, 7vw, 88px);
-    font-weight: 600;
-    line-height: 0.95;
-    letter-spacing: -0.03em;
-    color: var(--white);
-    margin-bottom: 28px;
-  }
+.hero-btns {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
 
-  .hero-title em {
-    font-style: normal;
-    color: var(--void-col);
-    text-shadow: 0 0 60px rgba(170,85,255,0.4);
-  }
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--void);
+  color: #fff;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  padding: 13px 26px;
+  text-decoration: none;
+  border-radius: 3px;
+  transition: box-shadow .2s, transform .2s;
+}
+.btn-primary:hover {
+  box-shadow: 0 0 36px rgba(170,85,255,.45);
+  transform: translateY(-1px);
+}
 
-  .hero-sub {
-    font-size: 16px;
-    font-weight: 300;
-    line-height: 1.65;
-    color: var(--soft);
-    max-width: 420px;
-    margin-bottom: 40px;
-  }
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--soft);
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  padding: 13px 22px;
+  text-decoration: none;
+  border-radius: 3px;
+  transition: border-color .2s, color .2s;
+}
+.btn-ghost:hover { border-color: var(--dim); color: var(--white); }
 
-  .hero-cta {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    background: transparent;
-    border: 1px solid var(--frontier);
-    color: var(--frontier);
-    font-family: var(--font-mono);
-    font-size: 13px;
-    letter-spacing: 0.1em;
-    padding: 14px 28px;
-    text-decoration: none;
-    border-radius: 2px;
-    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
-  }
-  .hero-cta:hover {
-    background: var(--frontier);
-    color: var(--void);
-    box-shadow: 0 0 40px rgba(51,170,255,0.3);
-  }
-  .hero-cta svg { width: 14px; height: 14px; }
+.hero-stat {
+  margin-top: 56px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--dim);
+  letter-spacing: 0.1em;
+}
+.hero-stat strong {
+  color: var(--spa);
+  font-weight: 400;
+  font-size: 22px;
+  display: block;
+  margin-bottom: 3px;
+}
 
-  /* live dot */
-  .live-badge {
-    position: absolute;
-    top: 32px; right: 40px;
-    z-index: 10;
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    font-family: var(--font-mono);
-    font-size: 11px;
-    letter-spacing: 0.12em;
-    color: var(--sparse);
-  }
-  .live-dot {
-    width: 7px; height: 7px;
-    border-radius: 50%;
-    background: var(--sparse);
-    animation: pulse 2s ease-in-out infinite;
-  }
-  @keyframes pulse {
-    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(51,221,170,0.4); }
-    50% { opacity: 0.7; box-shadow: 0 0 0 6px rgba(51,221,170,0); }
-  }
+/* Hero canvas panel */
+.hero-right {
+  position: relative;
+  overflow: hidden;
+}
+@media (max-width: 768px) {
+  .hero-right { height: 320px; }
+}
 
-  /* scroll hint */
-  .scroll-hint {
-    position: absolute;
-    bottom: 28px; right: 40px;
-    z-index: 2;
-    font-family: var(--font-mono);
-    font-size: 10px;
-    letter-spacing: 0.15em;
-    color: var(--muted);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-  }
-  .scroll-line {
-    width: 1px; height: 40px;
-    background: linear-gradient(to bottom, var(--muted), transparent);
-    animation: scrollDrop 2s ease-in-out infinite;
-  }
-  @keyframes scrollDrop {
-    0% { transform: scaleY(0); transform-origin: top; opacity: 0; }
-    50% { transform: scaleY(1); opacity: 1; }
-    100% { transform: scaleY(0); transform-origin: bottom; opacity: 0; }
-  }
+#hero-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  cursor: crosshair;
+}
 
-  /* ── CONCEPT ──────────────────────────────────────────── */
-  section { padding: 100px 64px; }
-  @media (max-width: 640px) { section { padding: 72px 24px; } }
+.canvas-label {
+  position: absolute;
+  bottom: 24px;
+  left: 24px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  color: var(--dim);
+  z-index: 2;
+  pointer-events: none;
+}
 
-  .section-label {
-    font-family: var(--font-mono);
-    font-size: 10px;
-    letter-spacing: 0.2em;
-    color: var(--dim);
-    text-transform: uppercase;
-    margin-bottom: 48px;
-    display: flex;
-    align-items: center;
-    gap: 16px;
-  }
-  .section-label::after {
-    content: '';
-    flex: 1;
-    max-width: 80px;
-    height: 1px;
-    background: var(--grid);
-  }
+/* Tooltip */
+#tooltip {
+  position: fixed;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 10px 14px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--white);
+  max-width: 240px;
+  pointer-events: none;
+  z-index: 100;
+  opacity: 0;
+  transition: opacity .15s;
+  line-height: 1.5;
+}
+#tooltip.visible { opacity: 1; }
+#tooltip .t-score { font-size: 16px; font-weight: 500; }
+#tooltip .t-idea { color: var(--soft); font-size: 10px; margin-top: 4px; font-family: var(--sans); font-style: italic; }
 
-  .concept-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2px;
-    max-width: 980px;
-  }
-  @media (max-width: 700px) { .concept-grid { grid-template-columns: 1fr; } }
+/* ── SECTIONS ──────────────────────────────────────────────── */
+section {
+  padding: 96px 56px;
+}
+@media (max-width: 640px) { section { padding: 72px 28px; } }
 
-  .concept-cell {
-    background: var(--deep);
-    padding: 40px 36px;
-  }
-  .concept-cell:first-child { border-top-left-radius: 4px; }
-  .concept-cell:nth-child(2) { border-top-right-radius: 4px; }
-  .concept-cell:nth-last-child(2) { border-bottom-left-radius: 4px; }
-  .concept-cell:last-child { border-bottom-right-radius: 4px; }
+.section-tag {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: var(--dim);
+  text-transform: uppercase;
+  margin-bottom: 40px;
+}
 
-  .concept-cell h3 {
-    font-size: 22px;
-    font-weight: 500;
-    margin-bottom: 14px;
-    letter-spacing: -0.02em;
-  }
-  .concept-cell p {
-    font-size: 14px;
-    line-height: 1.7;
-    color: var(--soft);
-    font-weight: 300;
-  }
-  .concept-icon {
-    font-size: 28px;
-    margin-bottom: 20px;
-    display: block;
-  }
+h2 {
+  font-family: var(--mono);
+  font-size: clamp(24px, 3.5vw, 42px);
+  font-weight: 400;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+  margin-bottom: 16px;
+}
 
-  /* ── HOW IT WORKS ─────────────────────────────────────── */
-  .how-bg { background: var(--deep); }
+.intro {
+  font-size: 15px;
+  color: var(--soft);
+  font-weight: 300;
+  line-height: 1.75;
+  max-width: 540px;
+  margin-bottom: 52px;
+}
 
-  .pipeline {
-    display: flex;
-    gap: 0;
-    overflow-x: auto;
-    scrollbar-width: none;
-    padding-bottom: 8px;
-    max-width: 1100px;
-  }
-  .pipeline::-webkit-scrollbar { display: none; }
+.alt-bg { background: var(--surface); }
 
-  .pipe-step {
-    flex: 0 0 220px;
-    padding: 32px 28px;
-    position: relative;
-  }
-  .pipe-step + .pipe-step::before {
-    content: '→';
-    position: absolute;
-    left: -10px;
-    top: 36px;
-    color: var(--muted);
-    font-size: 18px;
-  }
+/* ── PIPELINE ──────────────────────────────────────────────── */
+.pipeline-scroll {
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 4px;
+}
+.pipeline-scroll::-webkit-scrollbar { display: none; }
 
-  .pipe-num {
-    font-family: var(--font-mono);
-    font-size: 10px;
-    color: var(--muted);
-    letter-spacing: 0.15em;
-    margin-bottom: 12px;
-  }
+.pipeline {
+  display: flex;
+  gap: 1px;
+  min-width: max-content;
+}
 
-  .pipe-title {
-    font-size: 15px;
-    font-weight: 600;
-    margin-bottom: 10px;
-    letter-spacing: -0.01em;
-  }
+.pipe-step {
+  width: 190px;
+  background: var(--muted);
+  padding: 28px 22px;
+  flex-shrink: 0;
+  position: relative;
+}
+.pipe-step:first-child { border-radius: 3px 0 0 3px; }
+.pipe-step:last-child { border-radius: 0 3px 3px 0; }
 
-  .pipe-desc {
-    font-size: 12.5px;
-    line-height: 1.6;
-    color: var(--soft);
-    font-weight: 300;
-  }
+.pipe-n {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--dim);
+  letter-spacing: 0.15em;
+  margin-bottom: 10px;
+}
+.pipe-title {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: var(--white);
+}
+.pipe-desc {
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--soft);
+  font-weight: 300;
+}
+.pipe-tag {
+  display: inline-block;
+  margin-top: 12px;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+  padding: 3px 7px;
+  border-radius: 2px;
+}
 
-  .pipe-tag {
-    display: inline-block;
-    margin-top: 14px;
-    font-family: var(--font-mono);
-    font-size: 10px;
-    padding: 3px 8px;
-    border-radius: 2px;
-    letter-spacing: 0.08em;
-  }
+/* ── DENSITY TABLE ─────────────────────────────────────────── */
+.density-table {
+  width: 100%;
+  max-width: 860px;
+  border-collapse: collapse;
+}
+.density-table tr + tr td { border-top: 1px solid var(--border); }
+.density-table td {
+  padding: 16px 20px;
+  vertical-align: middle;
+}
+.density-table td:first-child { width: 120px; }
+.density-table td:nth-child(2) { width: 70px; font-family: var(--mono); font-size: 12px; color: var(--dim); }
+.density-table td:nth-child(3) { font-size: 13px; color: var(--soft); line-height: 1.5; }
+.density-table td:last-child { font-family: var(--mono); font-size: 11px; color: var(--dim); font-style: italic; text-align: right; }
+@media (max-width: 600px) { .density-table td:last-child { display: none; } }
 
-  /* ── DENSITY SCALE ────────────────────────────────────── */
-  .density-row {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    max-width: 900px;
-  }
+.d-label {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+}
 
-  .density-band {
-    display: grid;
-    grid-template-columns: 110px 60px 1fr auto;
-    align-items: center;
-    gap: 20px;
-    padding: 18px 24px;
-    background: var(--deep);
-    border-radius: 3px;
-    transition: background 0.2s;
-  }
-  .density-band:hover { background: var(--ink); }
+/* ── RESULT CARDS ──────────────────────────────────────────── */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  gap: 2px;
+  max-width: 900px;
+}
 
-  @media (max-width: 600px) {
-    .density-band { grid-template-columns: 90px 50px 1fr; }
-    .density-example { display: none; }
-  }
+.card {
+  background: var(--muted);
+  padding: 26px;
+  border-radius: 3px;
+}
+.card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+.card-score {
+  font-family: var(--mono);
+  font-size: 38px;
+  font-weight: 400;
+  line-height: 1;
+}
+.card-badge {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+  padding: 4px 9px;
+  border-radius: 2px;
+  margin-top: 4px;
+}
+.card-idea {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--white);
+  margin-bottom: 12px;
+}
+.card-novel {
+  font-size: 12px;
+  color: var(--soft);
+  line-height: 1.5;
+  border-left: 2px solid var(--muted);
+  padding-left: 10px;
+  font-weight: 300;
+  margin-bottom: 14px;
+}
+.card-neighbors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.nbr {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  color: var(--dim);
+  background: var(--border);
+  padding: 2px 7px;
+  border-radius: 2px;
+}
 
-  .density-label {
-    font-family: var(--font-mono);
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 0.1em;
-  }
+.calibration-note {
+  margin-top: 24px;
+  max-width: 860px;
+  padding: 14px 18px;
+  background: var(--muted);
+  border-left: 2px solid var(--dense);
+  border-radius: 2px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--dim);
+  line-height: 1.6;
+}
+.calibration-note strong { color: var(--dense); font-weight: 400; }
 
-  .density-range {
-    font-family: var(--font-mono);
-    font-size: 12px;
-    color: var(--dim);
-  }
+/* ── MATH ──────────────────────────────────────────────────── */
+.math-block {
+  background: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 32px 36px;
+  max-width: 680px;
+  margin-bottom: 20px;
+}
+.math-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  color: var(--dim);
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+.math-formula {
+  font-family: var(--mono);
+  font-size: 17px;
+  color: var(--fro);
+  letter-spacing: -0.01em;
+  line-height: 1.5;
+  margin-bottom: 14px;
+}
+.math-explain {
+  font-size: 13px;
+  color: var(--soft);
+  line-height: 1.7;
+  font-weight: 300;
+}
+.math-explain strong { color: var(--white); font-weight: 400; }
 
-  .density-desc {
-    font-size: 13px;
-    color: var(--soft);
-    font-weight: 300;
-    line-height: 1.5;
-  }
+/* ── STACK ─────────────────────────────────────────────────── */
+.stack-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+  max-width: 840px;
+}
+@media (max-width: 640px) { .stack-grid { grid-template-columns: 1fr 1fr; } }
 
-  .density-example {
-    font-family: var(--font-mono);
-    font-size: 11px;
-    color: var(--muted);
-    text-align: right;
-    font-style: italic;
-  }
+.stack-cell {
+  background: var(--muted);
+  padding: 22px 26px;
+}
+.stack-cell:first-child { border-radius: 3px 0 0 0; }
+.stack-cell:nth-child(3) { border-radius: 0 3px 0 0; }
+.stack-cell:nth-child(4) { border-radius: 0 0 0 3px; }
+.stack-cell:last-child { border-radius: 0 0 3px 0; }
 
-  /* ── REAL RESULTS ─────────────────────────────────────── */
-  .results-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 2px;
-    max-width: 1000px;
-  }
+.stack-layer {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.15em;
+  color: var(--dim);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.stack-name {
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 5px;
+}
+.stack-detail {
+  font-size: 11.5px;
+  color: var(--soft);
+  line-height: 1.5;
+  font-weight: 300;
+}
 
-  .result-card {
-    background: var(--deep);
-    padding: 28px;
-    border-radius: 3px;
-  }
+/* ── MAP GROWTH ────────────────────────────────────────────── */
+.growth-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-width: 560px;
+}
+.growth-item {
+  display: grid;
+  grid-template-columns: 90px 1fr 70px;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  background: var(--muted);
+  border-radius: 2px;
+}
+.growth-when {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--dim);
+  letter-spacing: 0.08em;
+}
+.growth-desc {
+  font-size: 12.5px;
+  color: var(--soft);
+}
+.growth-n {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--mid);
+  text-align: right;
+}
+.growth-item.now {
+  border-left: 2px solid var(--spa);
+}
+.growth-item.now .growth-when { color: var(--spa); }
+.growth-item.now .growth-n { color: var(--spa); }
 
-  .result-score-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 16px;
-  }
+/* ── CTA ───────────────────────────────────────────────────── */
+.cta-section {
+  background: var(--surface);
+  text-align: center;
+  padding: 112px 40px;
+  border-top: 1px solid var(--border);
+}
+.cta-section h2 { margin: 0 auto 16px; }
+.cta-sub {
+  font-size: 15px;
+  color: var(--soft);
+  font-weight: 300;
+  max-width: 400px;
+  margin: 0 auto 44px;
+  line-height: 1.7;
+}
+.cta-btns {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
 
-  .result-score {
-    font-family: var(--font-mono);
-    font-size: 36px;
-    font-weight: 500;
-    line-height: 1;
-  }
+/* ── FOOTER ────────────────────────────────────────────────── */
+footer {
+  padding: 28px 56px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--dim);
+  gap: 16px;
+  flex-wrap: wrap;
+}
+footer a { color: var(--mid); text-decoration: none; }
+footer a:hover { color: var(--white); }
 
-  .result-density-tag {
-    font-family: var(--font-mono);
-    font-size: 10px;
-    letter-spacing: 0.15em;
-    padding: 4px 10px;
-    border-radius: 2px;
-    font-weight: 500;
-  }
+/* ── REVEAL ────────────────────────────────────────────────── */
+.reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity .65s ease, transform .65s ease;
+}
+.reveal.in { opacity: 1; transform: none; }
 
-  .result-idea {
-    font-size: 14px;
-    line-height: 1.55;
-    color: var(--white);
-    margin-bottom: 14px;
-    font-weight: 400;
-  }
-
-  .result-novel {
-    font-size: 12.5px;
-    line-height: 1.5;
-    color: var(--soft);
-    font-weight: 300;
-    border-left: 2px solid var(--muted);
-    padding-left: 12px;
-    margin-bottom: 14px;
-  }
-
-  .result-neighbors {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-  }
-  .neighbor-tag {
-    font-family: var(--font-mono);
-    font-size: 10px;
-    color: var(--dim);
-    background: var(--grid);
-    padding: 3px 8px;
-    border-radius: 2px;
-  }
-
-  /* ── MATH ─────────────────────────────────────────────── */
-  .math-bg { background: var(--void); }
-
-  .math-block {
-    background: var(--deep);
-    border: 1px solid var(--grid);
-    border-radius: 4px;
-    padding: 36px 40px;
-    max-width: 700px;
-    margin-bottom: 32px;
-  }
-
-  .math-title {
-    font-family: var(--font-mono);
-    font-size: 11px;
-    letter-spacing: 0.15em;
-    color: var(--dim);
-    margin-bottom: 20px;
-    text-transform: uppercase;
-  }
-
-  .math-formula {
-    font-family: var(--font-mono);
-    font-size: 18px;
-    color: var(--frontier);
-    letter-spacing: -0.01em;
-    line-height: 1.6;
-    margin-bottom: 16px;
-  }
-
-  .math-explain {
-    font-size: 13px;
-    color: var(--soft);
-    line-height: 1.7;
-    font-weight: 300;
-  }
-
-  /* ── TECH STACK ───────────────────────────────────────── */
-  .stack-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 2px;
-    max-width: 900px;
-  }
-
-  .stack-cell {
-    background: var(--deep);
-    padding: 24px 28px;
-    border-radius: 3px;
-  }
-
-  .stack-layer {
-    font-family: var(--font-mono);
-    font-size: 10px;
-    color: var(--dim);
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    margin-bottom: 8px;
-  }
-
-  .stack-name {
-    font-size: 16px;
-    font-weight: 600;
-    margin-bottom: 6px;
-  }
-
-  .stack-detail {
-    font-size: 12px;
-    color: var(--soft);
-    font-weight: 300;
-    line-height: 1.5;
-  }
-
-  /* ── CTA ──────────────────────────────────────────────── */
-  .cta-section {
-    background: var(--deep);
-    text-align: center;
-    padding: 120px 40px;
-  }
-
-  .cta-pre {
-    font-family: var(--font-mono);
-    font-size: 11px;
-    letter-spacing: 0.2em;
-    color: var(--dim);
-    margin-bottom: 24px;
-    text-transform: uppercase;
-  }
-
-  .cta-headline {
-    font-size: clamp(32px, 5vw, 64px);
-    font-weight: 600;
-    letter-spacing: -0.03em;
-    line-height: 1.05;
-    margin-bottom: 20px;
-  }
-
-  .cta-sub {
-    font-size: 16px;
-    color: var(--soft);
-    font-weight: 300;
-    max-width: 440px;
-    margin: 0 auto 48px;
-    line-height: 1.6;
-  }
-
-  .cta-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 12px;
-    background: var(--void-col);
-    color: var(--void);
-    font-family: var(--font-mono);
-    font-size: 13px;
-    font-weight: 500;
-    letter-spacing: 0.1em;
-    padding: 16px 36px;
-    text-decoration: none;
-    border-radius: 2px;
-    transition: box-shadow 0.2s, transform 0.2s;
-  }
-  .cta-btn:hover {
-    box-shadow: 0 0 60px rgba(170,85,255,0.5);
-    transform: translateY(-1px);
-  }
-
-  /* ── FOOTER ───────────────────────────────────────────── */
-  footer {
-    padding: 32px 64px;
-    border-top: 1px solid var(--grid);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-family: var(--font-mono);
-    font-size: 11px;
-    color: var(--muted);
-  }
-  @media (max-width: 600px) {
-    footer { flex-direction: column; gap: 12px; padding: 24px; text-align: center; }
-  }
-
-  /* ── UTILS ────────────────────────────────────────────── */
-  .max { max-width: 980px; }
-
-  h2 {
-    font-size: clamp(28px, 4vw, 48px);
-    font-weight: 600;
-    letter-spacing: -0.03em;
-    line-height: 1.1;
-    margin-bottom: 20px;
-  }
-
-  .intro-p {
-    font-size: 16px;
-    color: var(--soft);
-    font-weight: 300;
-    line-height: 1.7;
-    max-width: 580px;
-    margin-bottom: 56px;
-  }
-
-  /* scroll-reveal */
-  .reveal {
-    opacity: 0;
-    transform: translateY(24px);
-    transition: opacity 0.7s ease, transform 0.7s ease;
-  }
-  .reveal.visible {
-    opacity: 1;
-    transform: none;
-  }
+/* ── SVG icons inline ──────────────────────────────────────── */
+.icon { width: 13px; height: 13px; vertical-align: middle; }
 </style>
 </head>
 <body>
 
-<!-- ── HERO ─────────────────────────────────────────── -->
-<section class="hero">
-  <canvas id="hero-canvas"></canvas>
+<div id="tooltip">
+  <div class="t-score" id="t-score"></div>
+  <div id="t-density"></div>
+  <div class="t-idea" id="t-idea"></div>
+</div>
 
-  <div class="live-badge">
-    <div class="live-dot"></div>
-    LIVE · GLOBAL MAP
+<!-- ══ HERO ════════════════════════════════════════════════════ -->
+<div class="hero">
+  <div class="hero-left">
+    <div class="hero-eyebrow">
+      <span class="live-dot"></span>
+      ORIGINALITY RADAR · LIVE GLOBAL MAP
+    </div>
+
+    <h1 class="hero-title">
+      Topological<br>
+      map of<br>
+      human <span class="accent">thought.</span>
+    </h1>
+
+    <p class="hero-sub">
+      Submit an idea. Real vector math scores it against every idea in the
+      shared database via cosine similarity. The map grows denser with every scan.
+    </p>
+
+    <div class="hero-btns">
+      <a href="#" class="btn-primary">
+        Open the radar
+        <svg class="icon" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 6.5h11M6.5 1l5.5 5.5-5.5 5.5"/></svg>
+      </a>
+      <a href="https://github.com/giljorge0/originality-radar" class="btn-ghost">
+        <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        GitHub
+      </a>
+    </div>
+
+    <div class="hero-stat">
+      <strong id="idea-count">153</strong>
+      IDEAS IN THE GLOBAL MAP · HOVER THE CANVAS →
+    </div>
   </div>
 
-  <div class="hero-content">
-    <p class="hero-eyebrow">Originality Radar · v1.0 · Voyage AI Embeddings</p>
-    <h1 class="hero-title">
-      Map of<br>human<br><em>thought.</em>
-    </h1>
-    <p class="hero-sub">
-      Submit an idea. Real vector math tells you how far you are from every thought humans have already had. Sail toward the void.
+  <div class="hero-right">
+    <canvas id="hero-canvas"></canvas>
+    <div class="canvas-label">GLOBAL IDEA MAP — PCA PROJECTION</div>
+  </div>
+</div>
+
+<!-- ══ HOW IT WORKS ════════════════════════════════════════════ -->
+<section class="alt-bg">
+  <div class="section-tag reveal">Pipeline</div>
+  <h2 class="reveal">From idea to coordinate.</h2>
+  <p class="intro reveal">Eight deterministic steps. No black-box scoring — every stage is inspectable and the math is reproducible.</p>
+
+  <div class="pipeline-scroll reveal">
+    <div class="pipeline">
+      <div class="pipe-step">
+        <div class="pipe-n">01</div>
+        <div class="pipe-title">Idea submitted</div>
+        <div class="pipe-desc">Plain text — a sentence, a paragraph, a fragment. No structure required.</div>
+        <span class="pipe-tag" style="background:#0d1117;color:var(--fro)">POST /api/ideas/scan</span>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-n">02</div>
+        <div class="pipe-title">Voyage AI embedding</div>
+        <div class="pipe-desc">voyage-3-large produces a deterministic high-dimensional semantic vector.</div>
+        <span class="pipe-tag" style="background:#0d1117;color:var(--spa)">voyage-3-large</span>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-n">03</div>
+        <div class="pipe-title">pgvector insert</div>
+        <div class="pipe-desc">Vector persisted in Supabase PostgreSQL, globally shared across all users.</div>
+        <span class="pipe-tag" style="background:#0d1117;color:var(--pop)">Supabase + pgvector</span>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-n">04</div>
+        <div class="pipe-title">k-NN query</div>
+        <div class="pipe-desc">10 nearest neighbors found by cosine distance. These are the closest ideas already in the map.</div>
+        <span class="pipe-tag" style="background:#0d1117;color:var(--pop)">k=10</span>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-n">05</div>
+        <div class="pipe-title">Score computed</div>
+        <div class="pipe-desc">Originality = (1 − avg cosine similarity) × 100. Pure math. High distance = high score.</div>
+        <span class="pipe-tag" style="background:#0d1117;color:var(--dense)">cosine distance</span>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-n">06</div>
+        <div class="pipe-title">PCA projection</div>
+        <div class="pipe-desc">All vectors projected to 2D via PCA. Similar ideas cluster; distance is preserved visually.</div>
+        <span class="pipe-tag" style="background:#0d1117;color:var(--spa)">PCA · 2D canvas</span>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-n">07</div>
+        <div class="pipe-title">Claude narrative</div>
+        <div class="pipe-desc">What makes it common? What's novel? A specific drift suggestion to push further from any cluster.</div>
+        <span class="pipe-tag" style="background:#0d1117;color:var(--void)">claude-sonnet-4-6</span>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-n">08</div>
+        <div class="pipe-title">Map updated</div>
+        <div class="pipe-desc">One more coordinate added globally. The topology shifts — however slightly — for everyone.</div>
+        <span class="pipe-tag" style="background:#0d1117;color:var(--void)">shared state</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ DENSITY SCALE ════════════════════════════════════════════ -->
+<section>
+  <div class="section-tag reveal">Density scale</div>
+  <h2 class="reveal">Where does your idea live?</h2>
+  <p class="intro reveal">Six zones. Each maps to a real range of cosine distances from the existing database.</p>
+
+  <table class="density-table reveal">
+    <tr>
+      <td><span class="d-label" style="color:var(--sat)">SATURATED</span></td>
+      <td>0 – 15</td>
+      <td>Millions have thought this exact combination. Every startup pitch deck has it.</td>
+      <td>"social media app"</td>
+    </tr>
+    <tr>
+      <td><span class="d-label" style="color:var(--dense)">DENSE</span></td>
+      <td>16 – 35</td>
+      <td>Heavily explored territory. Common combinations, well-funded companies nearby.</td>
+      <td>"AI-powered CRM"</td>
+    </tr>
+    <tr>
+      <td><span class="d-label" style="color:var(--pop)">POPULATED</span></td>
+      <td>36 – 55</td>
+      <td>Known territory with a distinguishing angle. Prior art exists but isn't exhaustive.</td>
+      <td>"dating app for readers"</td>
+    </tr>
+    <tr>
+      <td><span class="d-label" style="color:var(--spa)">SPARSE</span></td>
+      <td>56 – 75</td>
+      <td>Unusual domain intersection. Few have connected these dots at scale.</td>
+      <td>"EEG-controlled ferrofluid instrument"</td>
+    </tr>
+    <tr>
+      <td><span class="d-label" style="color:var(--fro)">FRONTIER</span></td>
+      <td>76 – 90</td>
+      <td>Genuinely novel. Hard to find prior art. You'd need to explain the concept from scratch.</td>
+      <td>"topology-aware dream compiler"</td>
+    </tr>
+    <tr>
+      <td><span class="d-label" style="color:var(--void)">VOID</span></td>
+      <td>91 – 100</td>
+      <td>Alien territory. No meaningful cluster nearby. Possibly unthought of, possibly unthinkable.</td>
+      <td>"???"</td>
+    </tr>
+  </table>
+</section>
+
+<!-- ══ REAL RESULTS ════════════════════════════════════════════ -->
+<section class="alt-bg">
+  <div class="section-tag reveal">Live results</div>
+  <h2 class="reveal">Real scans from the map.</h2>
+  <p class="intro reveal">Actual results from the live database, scored against real neighbors via cosine distance.</p>
+
+  <div class="cards reveal">
+    <div class="card">
+      <div class="card-top">
+        <span class="card-score" style="color:var(--pop)">44</span>
+        <span class="card-badge" style="background:#ffcc3314;color:var(--pop);border:1px solid #ffcc3330">POPULATED</span>
+      </div>
+      <p class="card-idea">Contact lenses that are smart — filters, effects, information overlay, so vision looks better than having glasses on.</p>
+      <p class="card-novel">Nearest neighbors: GPS nav apps, wearable tech, smart vision devices — the framing as a contact lens UX layer rather than AR glasses is what separates it.</p>
+      <div class="card-neighbors">
+        <span class="nbr">GPS navigation apps</span>
+        <span class="nbr">wearable tech</span>
+        <span class="nbr">smart vision devices</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-top">
+        <span class="card-score" style="color:var(--pop)">47</span>
+        <span class="card-badge" style="background:#ffcc3314;color:var(--pop);border:1px solid #ffcc3330">POPULATED</span>
+      </div>
+      <p class="card-idea">Ronaldo knows exactly where his character ends and his brand begins — he is one of the few humans who has fully theorized his own public self.</p>
+      <p class="card-novel">Framing a footballer as a systems-theorist of the self. Nearest: celebrity behavior analysis, sports philosophy — but that angle hasn't been explored in those clusters.</p>
+      <div class="card-neighbors">
+        <span class="nbr">celebrity behavior analysis</span>
+        <span class="nbr">sports philosophy</span>
+        <span class="nbr">financial markets</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-top">
+        <span class="card-score" style="color:var(--dense)">21</span>
+        <span class="card-badge" style="background:#ff883314;color:var(--dense);border:1px solid #ff883330">DENSE</span>
+      </div>
+      <p class="card-idea">A GPS navigation app that routes you to maximize encounters with interesting strangers based on your inferred social graph gaps.</p>
+      <p class="card-novel">Serendipity-routing is a real research area. The social-graph-gap angle is novel but the broader concept is close enough to existing clusters to score dense.</p>
+      <div class="card-neighbors">
+        <span class="nbr">location-based social</span>
+        <span class="nbr">serendipity engines</span>
+        <span class="nbr">graph-based matching</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="calibration-note reveal">
+    <strong>⚠ Scoring calibration in progress.</strong> Voyage AI embedding cosine similarities cluster in a compressed range (~0.40–0.65), causing most ideas to land in POPULATED/DENSE regardless of actual novelty. Percentile-based rescaling is the next engineering task — scores will spread across the full scale once that ships.
+  </div>
+</section>
+
+<!-- ══ MATH ════════════════════════════════════════════════════ -->
+<section>
+  <div class="section-tag reveal">The math</div>
+  <h2 class="reveal">One formula. No learned weights.</h2>
+  <p class="intro reveal">The score is pure geometry in embedding space — not a trained classifier, not a prompt asking Claude to guess.</p>
+
+  <div class="math-block reveal">
+    <div class="math-label">Originality Score</div>
+    <div class="math-formula">O(x) = (1 − (1/k) Σ cos_sim(x, xᵢ)) × 100</div>
+    <p class="math-explain">
+      Where <strong>x</strong> is your idea's vector, <strong>xᵢ</strong> are the k nearest neighbors in pgvector,
+      and cos_sim measures directional alignment in the embedding space. Score near 0 → you're pointing in exactly
+      the same direction as the crowd. Score near 100 → you're pointing somewhere no one has pointed before.
     </p>
-    <a href="#" class="hero-cta">
+  </div>
+
+  <div class="math-block reveal">
+    <div class="math-label">Why same idea → same score</div>
+    <p class="math-explain">
+      Voyage AI embeddings are deterministic — not sampled, not temperature-dependent. The same text in gives the same
+      vector out. Your score only changes as the database grows and new neighbors appear near you. This makes the map
+      a stable reference: ideas don't drift, the terrain fills in.
+    </p>
+  </div>
+</section>
+
+<!-- ══ STACK ════════════════════════════════════════════════════ -->
+<section class="alt-bg">
+  <div class="section-tag reveal">Stack</div>
+  <h2 class="reveal">What's running under it.</h2>
+  <p class="intro reveal">Open source. Self-hostable. Every component is swappable.</p>
+
+  <div class="stack-grid reveal">
+    <div class="stack-cell">
+      <div class="stack-layer">Embeddings</div>
+      <div class="stack-name" style="color:var(--fro)">Voyage AI</div>
+      <div class="stack-detail">voyage-3-large. High-dimensional, deterministic. Swap for OpenAI, Cohere, or local Ollama.</div>
+    </div>
+    <div class="stack-cell">
+      <div class="stack-layer">Vector DB</div>
+      <div class="stack-name" style="color:var(--spa)">pgvector</div>
+      <div class="stack-detail">PostgreSQL + pgvector on Supabase. k-NN in SQL. Free tier covers thousands of ideas.</div>
+    </div>
+    <div class="stack-cell">
+      <div class="stack-layer">Narrative</div>
+      <div class="stack-name" style="color:var(--void)">Claude Sonnet</div>
+      <div class="stack-detail">Why is it common? What's novel? Domain-specific drift suggestion per scan.</div>
+    </div>
+    <div class="stack-cell">
+      <div class="stack-layer">Backend</div>
+      <div class="stack-name" style="color:var(--pop)">Node + Express</div>
+      <div class="stack-detail">REST API. POST /ideas/scan, GET /ideas/map. Railway or any Node host.</div>
+    </div>
+    <div class="stack-cell">
+      <div class="stack-layer">Frontend</div>
+      <div class="stack-name" style="color:var(--pop)">React + Vite</div>
+      <div class="stack-detail">Canvas map, score meter, domain filters, Iterate → button. Vercel deploy.</div>
+    </div>
+    <div class="stack-cell">
+      <div class="stack-layer">Projection</div>
+      <div class="stack-name" style="color:var(--dense)">PCA</div>
+      <div class="stack-detail">Principal component reduction to 2D for the global canvas. Distance preserved.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ MAP GROWTH ══════════════════════════════════════════════ -->
+<section>
+  <div class="section-tag reveal">Map growth</div>
+  <h2 class="reveal">The topology fills in over time.</h2>
+  <p class="intro reveal">A VOID idea today may become FRONTIER in six months as others converge on that space. Originality is relative, not absolute.</p>
+
+  <div class="growth-row reveal">
+    <div class="growth-item">
+      <span class="growth-when">DAY 1</span>
+      <span class="growth-desc">High variance. Few neighbors. Scores are noisy.</span>
+      <span class="growth-n">~5 ideas</span>
+    </div>
+    <div class="growth-item now">
+      <span class="growth-when">NOW</span>
+      <span class="growth-desc">Clusters forming. Topology becoming legible.</span>
+      <span class="growth-n">153 ideas</span>
+    </div>
+    <div class="growth-item">
+      <span class="growth-when">MONTH 1</span>
+      <span class="growth-desc">Stable landscape. SATURATED zones clearly visible.</span>
+      <span class="growth-n">~2k ideas</span>
+    </div>
+    <div class="growth-item">
+      <span class="growth-when">YEAR 1</span>
+      <span class="growth-desc">True topological map of human ideation.</span>
+      <span class="growth-n">~50k ideas</span>
+    </div>
+  </div>
+</section>
+
+<!-- ══ CTA ═════════════════════════════════════════════════════ -->
+<section class="cta-section">
+  <div class="section-tag reveal" style="justify-content:center">Explore</div>
+  <h2 class="reveal">How far can you get?</h2>
+  <p class="cta-sub reveal">The map has 153 real ideas. Every scan adds one more coordinate. The terrain is shared and growing.</p>
+  <div class="cta-btns reveal">
+    <a href="#" class="btn-primary">
       Open the radar
-      <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
-        <path d="M1 7h12M7 1l6 6-6 6"/>
-      </svg>
+      <svg class="icon" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 6.5h11M6.5 1l5.5 5.5-5.5 5.5"/></svg>
+    </a>
+    <a href="https://github.com/giljorge0/originality-radar" class="btn-ghost">
+      <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+      View source
     </a>
   </div>
-
-  <div class="scroll-hint">
-    <div class="scroll-line"></div>
-    SCROLL
-  </div>
 </section>
 
-<!-- ── CONCEPT ───────────────────────────────────────── -->
-<section>
-  <div class="section-label reveal">The Idea</div>
-  <div class="max">
-    <h2 class="reveal">The inverse Akinator.</h2>
-    <p class="intro-p reveal">
-      Akinator narrows toward what everyone knows. This does the opposite — it measures how far your idea sits from the dense clusters of human thinking, in a real high-dimensional vector space.
-    </p>
-    <div class="concept-grid reveal">
-      <div class="concept-cell">
-        <span class="concept-icon">🗺️</span>
-        <h3>Topology of curiosity</h3>
-        <p>When humans ask similar things, that region of thought-space becomes dense. Your idea gets embedded as a coordinate and measured against every other coordinate in the database.</p>
-      </div>
-      <div class="concept-cell">
-        <span class="concept-icon">📐</span>
-        <h3>Real cosine distance</h3>
-        <p>Not vibes. Not an LLM guessing. Voyage AI produces deterministic semantic vectors. The same idea submitted twice gives nearly identical coordinates. The math is reproducible.</p>
-      </div>
-      <div class="concept-cell">
-        <span class="concept-icon">🌌</span>
-        <h3>The map grows denser</h3>
-        <p>Every submission enriches the global database. A VOID idea today (score 95) may become FRONTIER (score 78) in six months as others converge on that space. Originality is relative and evolving.</p>
-      </div>
-      <div class="concept-cell">
-        <span class="concept-icon">🧭</span>
-        <h3>Drift toward the edge</h3>
-        <p>The radar doesn't just score you — it suggests a specific constraint you can add to push your idea further from any known cluster. Turn brainstorming into exploration.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ── HOW IT WORKS ──────────────────────────────────── -->
-<section class="how-bg">
-  <div class="section-label reveal">Pipeline</div>
-  <div class="max">
-    <h2 class="reveal">From text to coordinate.</h2>
-    <p class="intro-p reveal">Eight steps. No black box scoring. Each stage is inspectable.</p>
-  </div>
-  <div class="pipeline reveal">
-    <div class="pipe-step">
-      <div class="pipe-num">01</div>
-      <div class="pipe-title">Idea submitted</div>
-      <div class="pipe-desc">User submits plain text. No structure required — a sentence, a paragraph, a fragment.</div>
-      <span class="pipe-tag" style="background:#0f1b35; color:var(--frontier);">POST /api/ideas/scan</span>
-    </div>
-    <div class="pipe-step">
-      <div class="pipe-num">02</div>
-      <div class="pipe-title">Voyage embedding</div>
-      <div class="pipe-desc">Backend calls Voyage AI to produce a deterministic high-dimensional semantic vector.</div>
-      <span class="pipe-tag" style="background:#0f1b35; color:var(--sparse);">voyage-3-large</span>
-    </div>
-    <div class="pipe-step">
-      <div class="pipe-num">03</div>
-      <div class="pipe-title">pgvector insert</div>
-      <div class="pipe-desc">Vector stored in Supabase PostgreSQL with the pgvector extension. Persists globally across all users.</div>
-      <span class="pipe-tag" style="background:#0f1b35; color:var(--populated);">pgvector · Supabase</span>
-    </div>
-    <div class="pipe-step">
-      <div class="pipe-num">04</div>
-      <div class="pipe-title">k-NN query</div>
-      <div class="pipe-desc">Find the 10 nearest neighbors by cosine distance. These are the closest ideas already in the database.</div>
-      <span class="pipe-tag" style="background:#0f1b35; color:var(--populated);">k=10 neighbors</span>
-    </div>
-    <div class="pipe-step">
-      <div class="pipe-num">05</div>
-      <div class="pipe-title">Score computed</div>
-      <div class="pipe-desc">Originality score = (1 − avg cosine similarity) × 100. Pure math. High distance = high score.</div>
-      <span class="pipe-tag" style="background:#0f1b35; color:var(--dense);">cosine distance</span>
-    </div>
-    <div class="pipe-step">
-      <div class="pipe-num">06</div>
-      <div class="pipe-title">2D projection</div>
-      <div class="pipe-desc">All vectors projected to 2D via PCA for the global map canvas. Similar ideas cluster naturally.</div>
-      <span class="pipe-tag" style="background:#0f1b35; color:var(--sparse);">PCA projection</span>
-    </div>
-    <div class="pipe-step">
-      <div class="pipe-num">07</div>
-      <div class="pipe-title">LLM narrative</div>
-      <div class="pipe-desc">Claude analyzes what makes the idea common vs. novel, and suggests a specific drift vector to push further.</div>
-      <span class="pipe-tag" style="background:#0f1b35; color:var(--frontier);">claude-sonnet-4-6</span>
-    </div>
-    <div class="pipe-step">
-      <div class="pipe-num">08</div>
-      <div class="pipe-title">Map updated</div>
-      <div class="pipe-desc">The global idea map gains one more coordinate. The topology shifts, however slightly, for everyone.</div>
-      <span class="pipe-tag" style="background:#0f1b35; color:var(--void-col);">shared state</span>
-    </div>
-  </div>
-</section>
-
-<!-- ── DENSITY SCALE ─────────────────────────────────── -->
-<section>
-  <div class="section-label reveal">Density Scale</div>
-  <div class="max">
-    <h2 class="reveal">Where does your idea live?</h2>
-    <p class="intro-p reveal">Six zones. Each corresponds to a real range of cosine distances from the existing database.</p>
-    <div class="density-row reveal">
-      <div class="density-band">
-        <span class="density-label" style="color:var(--saturated)">SATURATED</span>
-        <span class="density-range">0 – 15</span>
-        <span class="density-desc">Millions of people have thought this exact combination. Every startup pitch deck has it.</span>
-        <span class="density-example">"social media app"</span>
-      </div>
-      <div class="density-band">
-        <span class="density-label" style="color:var(--dense)">DENSE</span>
-        <span class="density-range">16 – 35</span>
-        <span class="density-desc">Well-explored territory with heavy prior art. Common combinations, well-funded companies nearby.</span>
-        <span class="density-example">"AI-powered CRM"</span>
-      </div>
-      <div class="density-band">
-        <span class="density-label" style="color:var(--populated)">POPULATED</span>
-        <span class="density-range">36 – 55</span>
-        <span class="density-desc">Known territory with a distinguishing angle. Prior art exists but isn't exhaustive.</span>
-        <span class="density-example">"dating app for readers"</span>
-      </div>
-      <div class="density-band">
-        <span class="density-label" style="color:var(--sparse)">SPARSE</span>
-        <span class="density-range">56 – 75</span>
-        <span class="density-desc">Unusual domain intersection. Few have connected these dots, and none at scale.</span>
-        <span class="density-example">"EEG-controlled ferrofluid instrument"</span>
-      </div>
-      <div class="density-band">
-        <span class="density-label" style="color:var(--frontier)">FRONTIER</span>
-        <span class="density-range">76 – 90</span>
-        <span class="density-desc">Genuinely novel. Hard to find prior art. You'd need to explain the concept from scratch to most people.</span>
-        <span class="density-example">"topology-aware dream compiler"</span>
-      </div>
-      <div class="density-band">
-        <span class="density-label" style="color:var(--void-col)">VOID</span>
-        <span class="density-range">91 – 100</span>
-        <span class="density-desc">Alien territory. No meaningful cluster nearby. Possibly unthought of, possibly unthinkable.</span>
-        <span class="density-example">"???"</span>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ── REAL RESULTS ───────────────────────────────────── -->
-<section class="how-bg">
-  <div class="section-label reveal">Live Examples</div>
-  <div class="max">
-    <h2 class="reveal">Real scans from the map.</h2>
-    <p class="intro-p reveal">These are actual results from the live database, scored against real neighbors.</p>
-    <div class="results-grid reveal">
-      <div class="result-card">
-        <div class="result-score-row">
-          <span class="result-score" style="color:var(--populated)">47</span>
-          <span class="result-density-tag" style="background:#ffcc3318; color:var(--populated); border:1px solid #ffcc3333">POPULATED</span>
-        </div>
-        <p class="result-idea">The idea that Ronaldo knows more about human nature than we think — he knows exactly where his character starts, where his brand starts and ends.</p>
-        <p class="result-novel">Framing a public figure as a systems-theorist of the self is an angle the celebrity-analysis cluster hasn't explored.</p>
-        <div class="result-neighbors">
-          <span class="neighbor-tag">celebrity behavior analysis</span>
-          <span class="neighbor-tag">sports philosophy</span>
-          <span class="neighbor-tag">personal branding</span>
-        </div>
-      </div>
-      <div class="result-card">
-        <div class="result-score-row">
-          <span class="result-score" style="color:var(--sparse)">57</span>
-          <span class="result-density-tag" style="background:#33ddaa18; color:var(--sparse); border:1px solid #33ddaa33">SPARSE</span>
-        </div>
-        <p class="result-idea">A musical instrument played entirely by manipulating magnetic fields in a ferrofluid bath, controlled via a brainwave EEG headset.</p>
-        <p class="result-novel">Manipulating a ferrofluid bath via EEG to create music has no meaningful prior art in this exact configuration.</p>
-        <div class="result-neighbors">
-          <span class="neighbor-tag">electronic instruments</span>
-          <span class="neighbor-tag">brain-computer interface</span>
-          <span class="neighbor-tag">ferrofluid art</span>
-        </div>
-      </div>
-      <div class="result-card">
-        <div class="result-score-row">
-          <span class="result-score" style="color:var(--sparse)">63</span>
-          <span class="result-density-tag" style="background:#33ddaa18; color:var(--sparse); border:1px solid #33ddaa33">SPARSE</span>
-        </div>
-        <p class="result-idea">dating app for people who like reading</p>
-        <p class="result-novel">A dating app where book taste is the primary matching signal — not personality traits, not photos, not location.</p>
-        <div class="result-neighbors">
-          <span class="neighbor-tag">niche dating apps</span>
-          <span class="neighbor-tag">book social networks</span>
-          <span class="neighbor-tag">Goodreads</span>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ── MATH ──────────────────────────────────────────── -->
-<section>
-  <div class="section-label reveal">The Math</div>
-  <div class="max">
-    <h2 class="reveal">Scoring formula.</h2>
-    <p class="intro-p reveal">One equation. No learned weights, no prompt-tuned scores.</p>
-    <div class="math-block reveal">
-      <div class="math-title">Originality Score</div>
-      <div class="math-formula">O(x) = (1 − (1/k) Σ cos_sim(x, xᵢ)) × 100</div>
-      <p class="math-explain">
-        Where <strong style="color:var(--white)">x</strong> is your idea's vector, <strong style="color:var(--white)">xᵢ</strong> are the k nearest neighbors in the database, and cos_sim measures directional alignment in high-dimensional space. A score near 0 means you're pointing in exactly the same direction as the crowd. A score near 100 means you're pointing somewhere no one has pointed before.
-      </p>
-    </div>
-    <div class="math-block reveal">
-      <div class="math-title">Why Deterministic Embeddings Matter</div>
-      <p class="math-explain">
-        The same idea submitted twice should produce almost identical scores. Voyage AI embeddings are stable — not sampled, not temperature-dependent. This means the map is reproducible. If your idea scores 73 today, it scores ~73 tomorrow, unless the database grows and new neighbors appear near you. The score changes only as the map fills in around you.
-      </p>
-    </div>
-  </div>
-</section>
-
-<!-- ── TECH STACK ─────────────────────────────────────── -->
-<section class="how-bg">
-  <div class="section-label reveal">Stack</div>
-  <div class="max">
-    <h2 class="reveal">What's running under it.</h2>
-    <p class="intro-p reveal">Open source. Self-hostable. Every component is swappable.</p>
-    <div class="stack-grid reveal">
-      <div class="stack-cell">
-        <div class="stack-layer">Embeddings</div>
-        <div class="stack-name" style="color:var(--frontier)">Voyage AI</div>
-        <div class="stack-detail">voyage-3-large. Deterministic, high-dimensional semantic vectors. Swappable for OpenAI or local models.</div>
-      </div>
-      <div class="stack-cell">
-        <div class="stack-layer">Vector DB</div>
-        <div class="stack-name" style="color:var(--sparse)">Supabase + pgvector</div>
-        <div class="stack-detail">PostgreSQL with the pgvector extension. k-NN queries in SQL. Free tier covers thousands of ideas.</div>
-      </div>
-      <div class="stack-cell">
-        <div class="stack-layer">Narrative</div>
-        <div class="stack-name" style="color:var(--void-col)">Claude Sonnet</div>
-        <div class="stack-detail">Analyzes what makes the idea common vs. novel. Generates domain-specific drift suggestions.</div>
-      </div>
-      <div class="stack-cell">
-        <div class="stack-layer">Backend</div>
-        <div class="stack-name" style="color:var(--populated)">Node.js + Express</div>
-        <div class="stack-detail">REST API. POST /ideas/scan, GET /ideas/map. Runs on Railway or any Node host.</div>
-      </div>
-      <div class="stack-cell">
-        <div class="stack-layer">Frontend</div>
-        <div class="stack-name" style="color:var(--populated)">React + Vite</div>
-        <div class="stack-detail">Canvas-based global map. Real-time score meter. Domain filter chips. Deploys to Vercel.</div>
-      </div>
-      <div class="stack-cell">
-        <div class="stack-layer">Projection</div>
-        <div class="stack-name" style="color:var(--dense)">PCA</div>
-        <div class="stack-detail">Principal Component Analysis reduces high-dimensional vectors to 2D for the global map canvas. Distance is preserved.</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ── CTA ───────────────────────────────────────────── -->
-<section class="cta-section">
-  <p class="cta-pre reveal">Ready?</p>
-  <h2 class="cta-headline reveal">How far can<br>you get?</h2>
-  <p class="cta-sub reveal">The global map has ideas already. Every scan adds one more coordinate. The topology is real, shared, and growing.</p>
-  <a href="#" class="cta-btn reveal">
-    Open the radar
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
-      <path d="M1 7h12M7 1l6 6-6 6"/>
-    </svg>
-  </a>
-</section>
-
-<!-- ── FOOTER ─────────────────────────────────────────── -->
+<!-- ══ FOOTER ══════════════════════════════════════════════════ -->
 <footer>
   <span>Originality Radar · MIT License</span>
-  <span style="color:var(--grid)">·</span>
-  <span>Voyage AI · Supabase pgvector · Claude Sonnet · React</span>
-  <span style="color:var(--grid)">·</span>
-  <a href="#" style="color:var(--muted); text-decoration:none;">GitHub →</a>
+  <span>Voyage AI · Supabase pgvector · Claude Sonnet · React + Vite</span>
+  <span>
+    <a href="https://github.com/giljorge0/originality-radar">GitHub</a>
+    &nbsp;·&nbsp;
+    <a href="#">Live demo</a>
+  </span>
 </footer>
 
 <script>
-// ── Hero canvas particle field ────────────────────────
+// ── HERO CANVAS — interactive idea map simulation ──────────────
 (function() {
   const canvas = document.getElementById('hero-canvas');
   const ctx = canvas.getContext('2d');
-  let W, H, particles = [], clusters = [];
-  const COLORS = ['#ff3333','#ff8833','#ffcc33','#33ddaa','#33aaff','#aa55ff'];
+  const tooltip = document.getElementById('tooltip');
+  const tScore = document.getElementById('t-score');
+  const tDensity = document.getElementById('t-density');
+  const tIdea = document.getElementById('t-idea');
+
+  const COLORS = {
+    SATURATED: '#ff3333',
+    DENSE:     '#ff8833',
+    POPULATED: '#ffcc33',
+    SPARSE:    '#33ddaa',
+    FRONTIER:  '#33aaff',
+    VOID:      '#aa55ff',
+  };
+
+  // Real ideas from the seed list, with plausible positions & scores
+  const IDEAS = [
+    { idea: "A social media platform for sharing short videos", score: 24, density: "DENSE", x: .12, y: .18 },
+    { idea: "A to-do list app with reminders", score: 27, density: "DENSE", x: .09, y: .28 },
+    { idea: "An Uber for food delivery", score: 31, density: "DENSE", x: .15, y: .12 },
+    { idea: "A subscription box for book lovers", score: 27, density: "DENSE", x: .08, y: .42 },
+    { idea: "An AI chatbot for customer support", score: 30, density: "DENSE", x: .18, y: .35 },
+    { idea: "A marketplace for freelance ML engineers", score: 28, density: "DENSE", x: .22, y: .22 },
+    { idea: "A mental health app using CBT + AI", score: 26, density: "DENSE", x: .16, y: .52 },
+    { idea: "Peer-to-peer lending for small businesses", score: 26, density: "DENSE", x: .10, y: .58 },
+    { idea: "Gamified language learning with spaced repetition", score: 25, density: "DENSE", x: .25, y: .45 },
+    { idea: "Carbon footprint tracker + offset platform", score: 28, density: "DENSE", x: .20, y: .62 },
+    { idea: "AI writing assistant for grammar and style", score: 28, density: "DENSE", x: .28, y: .30 },
+    { idea: "Dating app for people who like reading", score: 38, density: "POPULATED", x: .38, y: .38 },
+    { idea: "Scientists betting on research outcomes pre-publication", score: 47, density: "POPULATED", x: .45, y: .28 },
+    { idea: "Personalized workout routines via phone camera CV", score: 43, density: "POPULATED", x: .42, y: .58 },
+    { idea: "Airbnb for unused garage / basement storage", score: 49, density: "POPULATED", x: .35, y: .65 },
+    { idea: "Rating and reviewing the ethics of companies", score: 47, density: "POPULATED", x: .50, y: .48 },
+    { idea: "PDF → interactive Socratic dialogue with AI", score: 41, density: "POPULATED", x: .40, y: .72 },
+    { idea: "Social network for sharing handwritten letters", score: 45, density: "POPULATED", x: .55, y: .35 },
+    { idea: "Contact lenses but smart — visual UX filters", score: 44, density: "POPULATED", x: .48, y: .20 },
+    { idea: "Ronaldo as a systems-theorist of his own public self", score: 47, density: "POPULATED", x: .58, y: .60 },
+    { idea: "EEG-controlled ferrofluid musical instrument", score: 43, density: "POPULATED", x: .62, y: .42 },
+    { idea: "Hedge fund only investing in scientist-founders", score: 51, density: "POPULATED", x: .65, y: .25 },
+    { idea: "GPS routing to maximize serendipitous encounters", score: 37, density: "POPULATED", x: .55, y: .72 },
+    { idea: "Programming language readable as spoken prose", score: 45, density: "POPULATED", x: .68, y: .55 },
+    { idea: "Marketplace for exclusive word-usage rights", score: 44, density: "POPULATED", x: .72, y: .38 },
+    { idea: "App that generates your personal mythology", score: 39, density: "POPULATED", x: .70, y: .68 },
+    { idea: "Olfactory simulation for architects — how will it smell?", score: 44, density: "POPULATED", x: .75, y: .20 },
+    { idea: "Posts that expire after exactly the time it took to write them", score: 40, density: "POPULATED", x: .78, y: .50 },
+    { idea: "Memory trading escrow for BCI interfaces", score: 43, density: "POPULATED", x: .82, y: .30 },
+    { idea: "Phenomenological state compiler with biofeedback", score: 40, density: "POPULATED", x: .80, y: .62 },
+    { idea: "Journal where unit of publication is a falsifiable 10-year prediction", score: 48, density: "POPULATED", x: .85, y: .45 },
+    { idea: "City entropy derivatives — financial instruments on traffic predictability", score: 43, density: "POPULATED", x: .88, y: .20 },
+    { idea: "Organism engineered as a living musical instrument", score: 44, density: "POPULATED", x: .88, y: .70 },
+    { idea: "Bayesian jurisprudence — evidence weighted by presenter track record", score: 49, density: "POPULATED", x: .91, y: .38 },
+    { idea: "LLM trained exclusively on things that turned out wrong", score: 44, density: "POPULATED", x: .90, y: .58 },
+    { idea: "Political party with procedurally generated platform", score: 48, density: "POPULATED", x: .93, y: .22 },
+    { idea: "VR sub-personality negotiation via contract law", score: 44, density: "POPULATED", x: .94, y: .75 },
+    { idea: "Copyright on silence between musical notes", score: 43, density: "POPULATED", x: .95, y: .50 },
+  ];
+
+  let W, H, pts = [], mouse = { x: -999, y: -999 }, hovered = null;
 
   function resize() {
-    W = canvas.width = canvas.offsetWidth * devicePixelRatio;
-    H = canvas.height = canvas.offsetHeight * devicePixelRatio;
-    ctx.scale(devicePixelRatio, devicePixelRatio);
-    W /= devicePixelRatio; H /= devicePixelRatio;
+    const dpr = devicePixelRatio || 1;
+    W = canvas.offsetWidth;
+    H = canvas.offsetHeight;
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    ctx.scale(dpr, dpr);
+    buildPoints();
   }
-  window.addEventListener('resize', () => { resize(); init(); });
 
-  function init() {
-    particles = [];
-    clusters = [];
-
-    // Sparse ambient particles — right half weighted (the "void")
-    for (let i = 0; i < 180; i++) {
-      const rightBias = Math.random() < 0.65;
-      particles.push({
-        x: rightBias ? W * 0.4 + Math.random() * W * 0.6 : Math.random() * W,
-        y: Math.random() * H,
-        r: Math.random() * 1.2 + 0.3,
-        alpha: Math.random() * 0.25 + 0.04,
-        vx: (Math.random() - 0.5) * 0.15,
-        vy: (Math.random() - 0.5) * 0.15,
-        color: '#2a3a52',
-      });
-    }
-
-    // Left-side clusters (dense zones)
-    const clusterCenters = [
-      { x: W * 0.08, y: H * 0.3, color: '#ff3333', count: 40, spread: 60 },
-      { x: W * 0.15, y: H * 0.55, color: '#ff8833', count: 28, spread: 50 },
-      { x: W * 0.22, y: H * 0.2, color: '#ffcc33', count: 20, spread: 40 },
-      { x: W * 0.3, y: H * 0.7, color: '#33ddaa', count: 14, spread: 45 },
-      { x: W * 0.45, y: H * 0.4, color: '#33aaff', count: 8, spread: 55 },
-      { x: W * 0.72, y: H * 0.3, color: '#aa55ff', count: 3, spread: 20 },
-    ];
-
-    clusterCenters.forEach(c => {
-      for (let i = 0; i < c.count; i++) {
-        const angle = Math.random() * Math.PI * 2;
-        const dist = Math.pow(Math.random(), 0.5) * c.spread;
-        particles.push({
-          x: c.x + Math.cos(angle) * dist,
-          y: c.y + Math.sin(angle) * dist,
-          r: Math.random() * 2 + 0.6,
-          alpha: Math.random() * 0.55 + 0.2,
-          vx: (Math.random() - 0.5) * 0.08,
-          vy: (Math.random() - 0.5) * 0.08,
-          color: c.color,
-        });
-      }
-      clusters.push(c);
+  function buildPoints() {
+    pts = IDEAS.map((d, i) => {
+      // Add slight jitter so overlaps are visible
+      const jx = (Math.random() - .5) * 0.025;
+      const jy = (Math.random() - .5) * 0.025;
+      return {
+        ...d,
+        px: (d.x + jx) * W,
+        py: (d.y + jy) * H,
+        vx: (Math.random() - .5) * 0.25,
+        vy: (Math.random() - .5) * 0.25,
+        r: d.density === 'DENSE' ? 4 : d.density === 'POPULATED' ? 5 :
+           d.density === 'SPARSE' ? 6 : d.density === 'FRONTIER' ? 7 : 8,
+        color: COLORS[d.density] || '#666',
+        ox: (d.x + jx) * W,
+        oy: (d.y + jy) * H,
+      };
     });
   }
 
-  function drawConnections() {
-    clusters.forEach(c => {
-      const nearby = particles.filter(p => {
-        const dx = p.x - c.x, dy = p.y - c.y;
-        return Math.sqrt(dx*dx + dy*dy) < c.spread * 1.3 && p.color === c.color;
-      });
-      nearby.forEach(p => {
-        ctx.beginPath();
-        ctx.moveTo(c.x, c.y);
-        ctx.lineTo(p.x, p.y);
-        const alpha = 0.06;
-        ctx.strokeStyle = c.color;
-        ctx.globalAlpha = alpha;
-        ctx.lineWidth = 0.5;
-        ctx.stroke();
-        ctx.globalAlpha = 1;
-      });
-    });
-  }
-
-  let raf;
-  function animate() {
+  function draw() {
     ctx.clearRect(0, 0, W, H);
 
-    // Subtle right-side vignette (the void)
-    const grad = ctx.createRadialGradient(W*0.75, H*0.5, 0, W*0.75, H*0.5, W*0.4);
-    grad.addColorStop(0, 'rgba(170,85,255,0.03)');
-    grad.addColorStop(1, 'transparent');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, W, H);
-
-    drawConnections();
-
-    for (const p of particles) {
-      p.x += p.vx; p.y += p.vy;
-      if (p.x < -10) p.x = W + 10;
-      if (p.x > W + 10) p.x = -10;
-      if (p.y < -10) p.y = H + 10;
-      if (p.y > H + 10) p.y = -10;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-      ctx.fillStyle = p.color;
-      ctx.globalAlpha = p.alpha;
-      ctx.fill();
+    // Subtle grid
+    ctx.strokeStyle = '#0d1117';
+    ctx.lineWidth = 1;
+    for (let x = 0; x < W; x += 60) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
     }
-    ctx.globalAlpha = 1;
+    for (let y = 0; y < H; y += 60) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+    }
 
-    // Cluster halos
-    clusters.forEach(c => {
-      const g = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, c.spread * 1.8);
-      g.addColorStop(0, c.color + '18');
-      g.addColorStop(1, 'transparent');
-      ctx.fillStyle = g;
-      ctx.fillRect(0, 0, W, H);
+    // Draw connections between nearby DENSE cluster
+    pts.forEach(p => {
+      if (p.density !== 'DENSE' && p.density !== 'POPULATED') return;
+      pts.forEach(q => {
+        if (p === q) return;
+        const dx = p.px - q.px, dy = p.py - q.py;
+        const d = Math.sqrt(dx*dx + dy*dy);
+        if (d < 80 && (q.density === 'DENSE' || q.density === 'POPULATED')) {
+          ctx.beginPath();
+          ctx.moveTo(p.px, p.py);
+          ctx.lineTo(q.px, q.py);
+          ctx.strokeStyle = p.color;
+          ctx.globalAlpha = 0.04;
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
+          ctx.globalAlpha = 1;
+        }
+      });
     });
 
-    raf = requestAnimationFrame(animate);
+    // Dots
+    hovered = null;
+    pts.forEach(p => {
+      // Drift gently back toward original position
+      p.px += p.vx;
+      p.py += p.vy;
+      const dox = p.ox - p.px, doy = p.oy - p.py;
+      p.vx += dox * 0.0008;
+      p.vy += doy * 0.0008;
+      p.vx *= 0.98;
+      p.vy *= 0.98;
+
+      const dx = mouse.x - p.px, dy = mouse.y - p.py;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      const isHov = dist < p.r + 10;
+      if (isHov) hovered = p;
+
+      // Glow for hovered
+      if (isHov) {
+        const g = ctx.createRadialGradient(p.px, p.py, 0, p.px, p.py, p.r * 5);
+        g.addColorStop(0, p.color + '40');
+        g.addColorStop(1, 'transparent');
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(p.px, p.py, p.r * 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.beginPath();
+      ctx.arc(p.px, p.py, isHov ? p.r + 2 : p.r, 0, Math.PI * 2);
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = isHov ? 1 : 0.75;
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    });
+
+    canvas.style.cursor = hovered ? 'pointer' : 'crosshair';
+    requestAnimationFrame(draw);
   }
 
-  resize(); init(); animate();
-})();
+  canvas.addEventListener('mousemove', e => {
+    const rect = canvas.getBoundingClientRect();
+    mouse.x = e.clientX - rect.left;
+    mouse.y = e.clientY - rect.top;
 
-// ── Scroll reveal ────────────────────────────────────
-const observer = new IntersectionObserver(entries => {
-  entries.forEach(e => {
-    if (e.isIntersecting) {
-      e.target.classList.add('visible');
-      // stagger children
-      Array.from(e.target.children).forEach((child, i) => {
-        child.style.transitionDelay = `${i * 80}ms`;
-      });
+    if (hovered) {
+      tScore.textContent = hovered.score;
+      tScore.style.color = hovered.color;
+      tDensity.textContent = hovered.density;
+      tDensity.style.color = hovered.color;
+      tIdea.textContent = hovered.idea;
+      tooltip.classList.add('visible');
+      tooltip.style.left = (e.clientX + 16) + 'px';
+      tooltip.style.top  = (e.clientY - 12) + 'px';
+    } else {
+      tooltip.classList.remove('visible');
     }
   });
-}, { threshold: 0.1 });
 
-document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+  canvas.addEventListener('mouseleave', () => {
+    mouse.x = mouse.y = -999;
+    tooltip.classList.remove('visible');
+  });
+
+  window.addEventListener('resize', () => { resize(); });
+  resize();
+  draw();
+})();
+
+// ── Scroll reveal ──────────────────────────────────────────────
+const io = new IntersectionObserver(entries => {
+  entries.forEach((e, i) => {
+    if (e.isIntersecting) {
+      setTimeout(() => e.target.classList.add('in'), i * 40);
+    }
+  });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => io.observe(el));
 </script>
 </body>
 </html>
